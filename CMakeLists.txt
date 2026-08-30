@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.24)
 
 project(ShaderCourseStarter
-    VERSION 0.1.0
-    DESCRIPTION "Minimal OpenGL/GLSL starter for 3D and Shader Programming"
-    LANGUAGES C CXX
+        VERSION 0.1.0
+        DESCRIPTION "Minimal OpenGL/GLSL starter for 3D and Shader Programming"
+        LANGUAGES C CXX
 )
 
 set(CMAKE_CXX_STANDARD 20)
@@ -20,64 +20,83 @@ set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 
 # Pinned versions make the course setup reproducible.
 FetchContent_Declare(
-    glfw
-    GIT_REPOSITORY https://github.com/glfw/glfw.git
-    GIT_TAG 3.4
-    GIT_SHALLOW TRUE
+        glfw
+        GIT_REPOSITORY https://github.com/glfw/glfw.git
+        GIT_TAG 3.4
+        GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(glfw)
 
 add_library(glad STATIC
-    external/glad/src/gl.c
+        external/glad/src/gl.c
 )
 
 target_include_directories(glad
-    PUBLIC
+        PUBLIC
         external/glad/include
 )
 
 add_executable(shader_course
-    src/main.cpp
+        src/main.cpp
+        src/Shader.cpp
+        src/Shader.h
+)
+
+add_library(stb STATIC
+        vendors/stb/stb_image_impl.cpp
+)
+target_include_directories(stb PUBLIC
+        vendors
 )
 
 target_link_libraries(shader_course
-    PRIVATE
+        PRIVATE
         glfw
         glad
+        stb
 )
 
-if(MSVC)
+if (MSVC)
     target_compile_options(shader_course PRIVATE /W4 /permissive-)
-else()
+else ()
     target_compile_options(shader_course PRIVATE -Wall -Wextra -Wpedantic)
-endif()
+endif ()
 
 # Put the executable in a predictable location for single- and multi-config generators.
 set_target_properties(shader_course PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
-foreach(CONFIG Debug Release RelWithDebInfo MinSizeRel)
+foreach (CONFIG Debug Release RelWithDebInfo MinSizeRel)
     string(TOUPPER "${CONFIG}" CONFIG_UPPER)
     set_target_properties(shader_course PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY_${CONFIG_UPPER} "${CMAKE_BINARY_DIR}/bin"
+            RUNTIME_OUTPUT_DIRECTORY_${CONFIG_UPPER} "${CMAKE_BINARY_DIR}/bin"
     )
-endforeach()
+endforeach ()
 
 # Keep runtime shader files synchronized whenever shader_course is built.
 add_custom_target(copy_shaders
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_SOURCE_DIR}/shaders"
-            "${CMAKE_BINARY_DIR}/bin/shaders"
-    COMMENT "Copying shaders next to executable"
-    VERBATIM
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/shaders"
+        "${CMAKE_BINARY_DIR}/bin/shaders"
+        COMMENT "Copying shaders next to executable"
+        VERBATIM
 )
+add_custom_target(copy_resources
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/res"
+        "${CMAKE_BINARY_DIR}/bin/res"
+        COMMENT "Copying resources next to executable"
+        VERBATIM
+)
+
+add_dependencies(shader_course copy_resources)
 
 add_dependencies(shader_course copy_shaders)
 
 # When launching from a generated Visual Studio project, run from the
 # executable directory so relative paths such as shaders/basic.vert work.
 set_target_properties(shader_course PROPERTIES
-    VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+        VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
 # Helpful when opening the generated solution in Visual Studio.
