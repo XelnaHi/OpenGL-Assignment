@@ -7,6 +7,10 @@
 #include "Shader.h"
 #include "stb/stb_image.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 
 void processInput(GLFWwindow *window);
@@ -178,6 +182,7 @@ int main() {
     glUniform1i(glGetUniformLocation(shaderOrangee.ID, "texture1"), 0);
     // or set it via the texture class
     shaderOrangee.setInt("texture2", 1);
+
     // render loop
     while (!glfwWindowShouldClose(window)) {
         // input
@@ -195,6 +200,14 @@ int main() {
 
         // prepare to use the first shader program when rendering the first triangle
         shaderOrangee.use();
+        // remember that matrix transformations happen in reverse order. important to rotate before a translation is performed, as to not
+        // accidentally apply rotation (and thus some form of skewed scaling) to the offset position.
+        glm::mat4 trans = glm::mat4(1.0f);
+        trans = glm::translate(trans, glm::vec3(-0.5f, 0.5f, 0.0f));
+        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(-0.5f, 0.0f, 1.0f));
+        unsigned int transformLoc = glGetUniformLocation(shaderOrangee.ID, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+
         shaderOrangee.setFloat("mixValue", mixValue);
         glBindVertexArray(VAOs[0]);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -204,9 +217,15 @@ int main() {
         float timeValue = glfwGetTime();
         float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
         shaderYellow.use();
-        shaderYellow.SetUniform4f("ourColor", 0.0f, greenValue, 0.0f, 1.0f);
+        trans = glm::mat4(1.0f);
+        trans = glm::translate(trans, glm::vec3(0.5f, 0.5f, 0.0f));
+        float scaleAmount = static_cast<float>(sin(glfwGetTime()));
+        trans = glm::scale(trans, glm::vec3(scaleAmount, scaleAmount, scaleAmount));
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &trans[0][0]);
+        
+        shaderYellow.SetUniform4f("u_GreenValue", 0.0f, greenValue, 0.0f, 1.0f);
         shaderYellow.setFloat("u_HorTrans", horTrans);
-        horTrans += 0.001f;
+        horTrans += 0.01f;
 
         glBindVertexArray(VAOs[1]);
         glDrawArrays(GL_TRIANGLES, 0, 3); // this call should output a yellow triangle

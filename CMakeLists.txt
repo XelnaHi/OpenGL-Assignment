@@ -54,6 +54,7 @@ target_link_libraries(shader_course
         glfw
         glad
         stb
+        glm::glm
 )
 
 if (MSVC)
@@ -72,6 +73,10 @@ foreach (CONFIG Debug Release RelWithDebInfo MinSizeRel)
             RUNTIME_OUTPUT_DIRECTORY_${CONFIG_UPPER} "${CMAKE_BINARY_DIR}/bin"
     )
 endforeach ()
+
+# --- GLM ---
+set(GLM_BUILD_LIBRARY ON CACHE BOOL "" FORCE)
+add_subdirectory(vendors/glm)
 
 # Keep runtime shader files synchronized whenever shader_course is built.
 add_custom_target(copy_shaders
