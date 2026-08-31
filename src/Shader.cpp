@@ -3,6 +3,9 @@
 //
 
 #include "Shader.h"
+#include <glm/gtc/matrix_transform.hpp>
+
+#include "glm/gtc/type_ptr.hpp"
 
 Shader::Shader(const char *vertexPath, const char *fragmentPath) {
     // retrieve the vertex/fragment shader source code from filepath
@@ -73,7 +76,7 @@ Shader::Shader(const char *vertexPath, const char *fragmentPath) {
     // setup Shader program
     ID = glCreateProgram();
     glAttachShader(ID, vertex),
-    glAttachShader(ID, fragment);
+            glAttachShader(ID, fragment);
     glLinkProgram(ID);
 
     // print link errors if any
@@ -93,7 +96,7 @@ void Shader::use() {
 }
 
 void Shader::setBool(const std::string &name, bool value) {
-    glUniform1i(glGetUniformLocation(ID, name.c_str()), (int)value);
+    glUniform1i(glGetUniformLocation(ID, name.c_str()), (int) value);
 }
 
 void Shader::setInt(const std::string &name, int value) {
@@ -108,9 +111,11 @@ void Shader::SetUniform4f(const std::string &name, float v0, float v1, float v2,
     glUniform4f(glGetUniformLocation(ID, name.c_str()), v0, v1, v2, v3);
 }
 
+void Shader::SetMat4(const std::string &name, unsigned int count, unsigned int normalized, glm::mat4 m4) {
+    glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), count, normalized, glm::value_ptr(m4));
+}
+
 
 void Shader::Unbind() {
     glDeleteProgram(ID);
 }
-
-
