@@ -218,7 +218,6 @@ int main() {
     // uncomment this call to draw in wireframe polygons.
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    float horTrans = 0.001f;
 
     shaderOrangee.use();
     glUniform1i(glGetUniformLocation(shaderOrangee.ID, "texture1"), 0);
@@ -226,6 +225,9 @@ int main() {
     shaderOrangee.setInt("texture2", 1);
 
     glEnable(GL_DEPTH_TEST);
+
+    float incAngle = 20.0f;
+    float angle = 20.0f;
 
     // render loop
     while (!glfwWindowShouldClose(window)) {
@@ -257,13 +259,20 @@ int main() {
 
         shaderOrangee.setFloat("mixValue", mixValue);
         glBindVertexArray(VAOs[0]);
-        for (unsigned int i = 0; i < 10; i++)
-        {
+        // for (unsigned int i = 0; i < 10; i++) {
+        //
+        // }
+        for (unsigned int i = 0; i < 10; i++) {
             // calculate the model matrix for each object and pass it to shader before drawing
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, cubePositions[i]);
-            float angle = 20.0f * i;
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            angle * i;
+            if (i % 3 == 0) {
+                incAngle += 0.01f;
+                model = glm::rotate(model, glm::radians(incAngle), glm::vec3(1.0f, 0.3f, 0.5f));
+            } else {
+                model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            }
             shaderOrangee.SetMat4("u_Model", 1, GL_FALSE, model);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -281,7 +290,6 @@ int main() {
         shaderYellow.SetMat4("u_Projection", 1, GL_FALSE, projection);
 
         shaderYellow.SetUniform4f("u_GreenValue", 0.0f, greenValue, 0.0f, 1.0f);
-        horTrans += 0.01f;
 
         glBindVertexArray(VAOs[1]);
         glDrawArrays(GL_TRIANGLES, 0, 3); // this call should output a yellow triangle
