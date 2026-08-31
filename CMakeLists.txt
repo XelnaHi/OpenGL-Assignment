@@ -40,6 +40,7 @@ add_executable(shader_course
         src/main.cpp
         src/Shader.cpp
         src/Shader.h
+        src/Camera.h
 )
 
 add_library(stb STATIC

@@ -11,15 +11,28 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Camera.h"
+
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 
 void processInput(GLFWwindow *window);
+
+void mouse_callback(GLFWwindow *window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 float mixValue = 0.2f;
+
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+float lastMouseX = SCR_WIDTH / 2;
+float lastMouseY = SCR_HEIGHT / 2;
+bool firstMouse = true;
+
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
 
 int main() {
     // glfw: initialize and configure
@@ -225,12 +238,37 @@ int main() {
     shaderOrangee.setInt("texture2", 1);
 
     glEnable(GL_DEPTH_TEST);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
 
     float incAngle = 20.0f;
     float angle = 20.0f;
 
+    /* lookAt matrix example */
+    /*  R = camera right vector
+     *  U = camera up vector
+     *  D = camera direction vector
+     *  P = camera's position
+     *  __           __         --          --
+     *  |Rx, Ry, Rz, 0]         |1, 0, 0, -Px|
+     *  |Ux, Uy, Uz, 0|     *   |0, 1, 0, -Py|
+     *  |Dx, Dy, Dz, 0|         |0, 0, 1, -Pz|
+     *  |0,  0,  0,  0|         |0, 0, 0,  1 |
+     *  --          --          --          --
+     *  The result of the above matrix is calculated using: glm::lookAt(cameraPos, targetPos, worldUp)
+     */
+
+    glm::mat4 lookAtView = glm::lookAt((glm::vec3(0.0f, 0.0f, 3.0f)),
+                                       glm::vec3(0.0f, 0.0f, 0.0f),
+                                       glm::vec3(0.0f, 1.0f, 0.0f));
+
     // render loop
     while (!glfwWindowShouldClose(window)) {
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
         // input
         processInput(window);
 
@@ -249,19 +287,22 @@ int main() {
         glm::mat4 model = glm::mat4(1.0f); //identity matrix
         glm::mat4 view = glm::mat4(1.0f);
         glm::mat4 projection = glm::mat4(1.0f);
-        projection = glm::perspective(glm::radians(45.0f), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1F, 100.0F);
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1F, 100.0F);
+        view = camera.GetViewMatrix();
 
         unsigned int modelLoc = glGetUniformLocation(shaderOrangee.ID, "u_Model");
         unsigned int viewLoc = glGetUniformLocation(shaderOrangee.ID, "u_View");
-        shaderOrangee.SetMat4("u_Projection", 1, GL_FALSE, projection);
+        shaderOrangee.SetMat4("u_Projection", projection);
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
 
         shaderOrangee.setFloat("mixValue", mixValue);
         glBindVertexArray(VAOs[0]);
-        // for (unsigned int i = 0; i < 10; i++) {
-        //
-        // }
+
+        /* camera "rotation" */
+        const float radius = 10.0f;
+        float camX = sin(glfwGetTime()) * radius;
+        float camZ = cos(glfwGetTime()) * radius;
+
         for (unsigned int i = 0; i < 10; i++) {
             // calculate the model matrix for each object and pass it to shader before drawing
             glm::mat4 model = glm::mat4(1.0f);
@@ -269,14 +310,15 @@ int main() {
             angle * i;
             if (i % 3 == 0) {
                 incAngle += 0.01f;
-                model = glm::rotate(model, glm::radians(incAngle), glm::vec3(1.0f, 0.3f, 0.5f));
+                model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
             } else {
                 model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
             }
-            shaderOrangee.SetMat4("u_Model", 1, GL_FALSE, model);
+            shaderOrangee.SetMat4("u_Model", model);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
+
 
         // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         // then we draw the second triangle using the data from the second VAO
@@ -287,7 +329,7 @@ int main() {
         shaderYellow.use();
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
-        shaderYellow.SetMat4("u_Projection", 1, GL_FALSE, projection);
+        shaderYellow.SetMat4("u_Projection", projection);
 
         shaderYellow.SetUniform4f("u_GreenValue", 0.0f, greenValue, 0.0f, 1.0f);
 
@@ -315,19 +357,14 @@ void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        std::cout << "mix value: " << mixValue << std::endl;
-        mixValue += 0.01f;
-        if (mixValue >= 1.0f)
-            mixValue = 1.0f;
-    }
-
-    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        std::cout << "mix value: " << mixValue << std::endl;
-        mixValue -= 0.01f;
-        if (mixValue <= 0.0f)
-            mixValue = 0.0f;
-    }
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.ProcessKeyboard(FORWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.ProcessKeyboard(LEFT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.ProcessKeyboard(RIGHT, deltaTime);
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -336,4 +373,29 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     // make sure the viewport matches the new window dimensions; note that width and
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
+}
+
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
+
+    if (firstMouse)
+    {
+        lastMouseX = xpos;
+        lastMouseY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastMouseX;
+    float yoffset = lastMouseY - ypos; // reversed since y-coordinates go from bottom to top
+
+    lastMouseX = xpos;
+    lastMouseY = ypos;
+
+    camera.ProcessMouseMovement(xoffset, yoffset);
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }

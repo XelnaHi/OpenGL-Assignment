@@ -30,7 +30,7 @@ public:
     void setInt(const std::string &name, int value);
     void setFloat(const std::string &name, float value);
     void SetUniform4f(const std::string &name, float v0, float v1, float v2, float v3);
-    void SetMat4(const std::string &name, unsigned int count, unsigned int normalized, glm::mat4 m4);
+    void SetMat4(const std::string &name, glm::mat4 m4);
 
     void Unbind();
 };
