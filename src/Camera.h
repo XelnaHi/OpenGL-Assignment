@@ -11,7 +11,9 @@ enum Camera_Movement {
     FORWARD,
     BACKWARD,
     LEFT,
-    RIGHT
+    RIGHT,
+    UP,
+    DOWN
 };
 
 const float YAW = -90.f;
@@ -71,6 +73,9 @@ public:
                 break;
             case RIGHT: Position += Right * velocity;
                 break;
+            case UP: Position += Up * velocity;
+                break;
+            case DOWN: Position -= Up * velocity;
         }
     }
 
