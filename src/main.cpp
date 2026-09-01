@@ -18,21 +18,31 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-// settings
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
+
+// screen settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
+// uniform values
 float mixValue = 0.2f;
 
+// Camera init
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+// mouse callback settings
 float lastMouseX = SCR_WIDTH / 2;
 float lastMouseY = SCR_HEIGHT / 2;
 bool firstMouse = true;
 
+// game loop settings
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+// model rotations
+float incAngle = 20.0f;
+float angle = 20.0f;
 
 int main() {
     // glfw: initialize and configure
@@ -53,8 +63,9 @@ int main() {
         return -1;
     }
     glfwMakeContextCurrent(window); // CPU
-    glfwSwapInterval(1); // enables vsync, syncs to monitor refresh
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); // CPU
+    glfwSwapInterval(1);
+    // enables vsync, syncs to monitor refresh. Not sure this actually works the way I had hoped it too. Also, feels redundant now with deltaTime in place.
+
 
     // CPU asks drivers for OS-specific function pointers
     if (!gladLoadGL((GLADloadfunc) glfwGetProcAddress)) // CPU, prepping for GPU integration
@@ -63,33 +74,16 @@ int main() {
         return -1;
     }
 
+    // Callback registrations
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glEnable(GL_DEPTH_TEST);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
 
     // These two initializations heavily reduce code clutter in main file.
     Shader shaderOrangee("shaders/secondBasic.vert", "shaders/basicShaderOrange.frag");
     Shader shaderYellow("shaders/secondBasic.vert", "shaders/basicShaderYellow.frag");
-
-    // set up vertex data, vertex buffer objects and vertex attribute pointers.
-    // First vertex data
-    float firstTriangle[] = {
-        // CPU
-        -0.9f, -0.5f, 0.0f, // left
-        -0.0f, -0.5f, 0.0f, // right
-        -0.45f, 0.5f, 0.0f, // top
-    };
-
-    // Second vertex data
-    float secondTriangle[] = {
-        // CPU
-        0.0f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, // left
-        0.9f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // right
-        0.45f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f // top
-    };
-
-    float texCoords[] = {
-        0.0f, 0.0f, // lower-left corner
-        1.0f, 0.0f, // lower-right corner
-        0.5f, 1.0f // top-center corner
-    };
 
     float vertices[] = {
         -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
@@ -149,16 +143,18 @@ int main() {
     };
 
     unsigned int texture1, texture2;
+
+    // texture 1 setup
     glGenTextures(1, &texture1);
     glBindTexture(GL_TEXTURE_2D, texture1);
 
-    // set the texture wrapping/filtering options (on the currently bound texture object)
+    // texture 1 configs
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    // load and generate the texture
+    // load and generate texture 1
     int width, height, nrChannels;
     stbi_set_flip_vertically_on_load(true);
     unsigned char *data = stbi_load("res/textures/container.jpg", &width, &height, &nrChannels, 0);
@@ -170,21 +166,18 @@ int main() {
     }
     stbi_image_free(data);
 
-    // texture 2
-    // ---------
+    // texture 2 setup
     glGenTextures(1, &texture2);
     glBindTexture(GL_TEXTURE_2D, texture2);
-    // set the texture wrapping parameters
+    // texture 2 configs
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    // set texture wrapping to GL_REPEAT (default wrapping method)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // set texture filtering parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // load image, create texture and generate mipmaps
+
+    // load and generate texture 2
     data = stbi_load("res/textures/awesomeface.png", &width, &height, &nrChannels, 0);
     if (data) {
-        // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     } else {
@@ -208,6 +201,8 @@ int main() {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *) (3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
+
+    /* Keeping this as a reminder for index buffer object setup
     unsigned int indices[] = {
         0, 1, 3, // first triangle
         1, 2, 3 // second triangle
@@ -218,7 +213,6 @@ int main() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    // second triangle setup
     glBindVertexArray(VAOs[1]);
     glBindBuffer(GL_ARRAY_BUFFER, VBOs[1]); // and a different VBO
     glBufferData(GL_ARRAY_BUFFER, sizeof(secondTriangle), secondTriangle, GL_STATIC_DRAW);
@@ -226,7 +220,7 @@ int main() {
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) (3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-    // because the vertex data is tightly packed we can also specify 0 as the vertex attribute's stride to let OpenGL figure it out
+    */
 
     // uncomment this call to draw in wireframe polygons.
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -234,16 +228,8 @@ int main() {
 
     shaderOrangee.use();
     glUniform1i(glGetUniformLocation(shaderOrangee.ID, "texture1"), 0);
-    // or set it via the texture class
     shaderOrangee.setInt("texture2", 1);
 
-    glEnable(GL_DEPTH_TEST);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
-
-    float incAngle = 20.0f;
-    float angle = 20.0f;
 
     /* lookAt matrix example */
     /*  R = camera right vector
@@ -258,10 +244,6 @@ int main() {
      *  --          --          --          --
      *  The result of the above matrix is calculated using: glm::lookAt(cameraPos, targetPos, worldUp)
      */
-
-    glm::mat4 lookAtView = glm::lookAt((glm::vec3(0.0f, 0.0f, 3.0f)),
-                                       glm::vec3(0.0f, 0.0f, 0.0f),
-                                       glm::vec3(0.0f, 1.0f, 0.0f));
 
     // render loop
     while (!glfwWindowShouldClose(window)) {
@@ -282,7 +264,7 @@ int main() {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
 
-        // prepare to use the first shader program when rendering the first triangle
+        // prepare to use the first shader program
         shaderOrangee.use();
         glm::mat4 model = glm::mat4(1.0f); //identity matrix
         glm::mat4 view = glm::mat4(1.0f);
@@ -290,7 +272,6 @@ int main() {
         projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1F, 100.0F);
         view = camera.GetViewMatrix();
 
-        unsigned int modelLoc = glGetUniformLocation(shaderOrangee.ID, "u_Model");
         unsigned int viewLoc = glGetUniformLocation(shaderOrangee.ID, "u_View");
         shaderOrangee.SetMat4("u_Projection", projection);
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
@@ -298,44 +279,20 @@ int main() {
         shaderOrangee.setFloat("mixValue", mixValue);
         glBindVertexArray(VAOs[0]);
 
-        /* camera "rotation" */
-        const float radius = 10.0f;
-        float camX = sin(glfwGetTime()) * radius;
-        float camZ = cos(glfwGetTime()) * radius;
-
         for (unsigned int i = 0; i < 10; i++) {
             // calculate the model matrix for each object and pass it to shader before drawing
-            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::mat4(1.0f);
             model = glm::translate(model, cubePositions[i]);
-            angle * i;
             if (i % 3 == 0) {
                 incAngle += 0.01f;
-                model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+                model = glm::rotate(model, glm::radians(incAngle), glm::vec3(1.0f, 0.3f, 0.5f));
             } else {
-                model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+                model = glm::rotate(model, glm::radians(angle * i), glm::vec3(1.0f, 0.3f, 0.5f));
             }
             shaderOrangee.SetMat4("u_Model", model);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
-
-
-        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        // then we draw the second triangle using the data from the second VAO
-        // when we draw the second triangle we want to use a different shader program so we switch to the shader program with our yellow fragment shader.
-
-        float timeValue = glfwGetTime();
-        float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
-        shaderYellow.use();
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
-        shaderYellow.SetMat4("u_Projection", projection);
-
-        shaderYellow.SetUniform4f("u_GreenValue", 0.0f, greenValue, 0.0f, 1.0f);
-
-        glBindVertexArray(VAOs[1]);
-        glDrawArrays(GL_TRIANGLES, 0, 3); // this call should output a yellow triangle
-
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -368,19 +325,17 @@ void processInput(GLFWwindow *window) {
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     // make sure the viewport matches the new window dimensions; note that width and
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
 }
 
-void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
+void mouse_callback(GLFWwindow *window, double xposIn, double yposIn) {
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
 
-    if (firstMouse)
-    {
+    if (firstMouse) {
         lastMouseX = xpos;
         lastMouseY = ypos;
         firstMouse = false;
@@ -395,7 +350,6 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
     camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
