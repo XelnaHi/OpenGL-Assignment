@@ -308,10 +308,31 @@ int main() {
         // Switch active shader target (light object)
         lightObjectShader.use();
         // Set uniform colors
-        lightObjectShader.setVec3("u_ObjectColor", glm::vec3(1.0f, 0.5f, 0.31f));
-        lightObjectShader.setVec3("u_LightColor", glm::vec3(1.0f, 1.0f, 1.0f));
         lightObjectShader.setVec3("u_lightSourcePos", lightPos);
         lightObjectShader.setVec3("u_ViewPos", camera.Position);
+
+        // Set uniform material properties
+        lightObjectShader.setVec3("u_Material.ambient", glm::vec3(1.0f, 0.5f, 0.31f));
+        lightObjectShader.setVec3("u_Material.diffuse", glm::vec3(1.0f, 0.5f, 0.31f));
+        lightObjectShader.setVec3("u_Material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+        lightObjectShader.setFloat("u_Material.shininess", 32.0f);
+
+        // Set light source uniforms
+        lightObjectShader.setVec3("u_Light.ambient",  glm::vec3(0.2f, 0.2f, 0.2f));
+        lightObjectShader.setVec3("u_Light.diffuse",  glm::vec3(0.5f, 0.5f, 0.5f));
+        lightObjectShader.setVec3("u_Light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+
+        // Source light colors
+        glm::vec3 lightColor;
+        lightColor.x = sin(glfwGetTime() * 2.0f);
+        lightColor.y = sin(glfwGetTime() * 0.7f);
+        lightColor.z = sin(glfwGetTime() * 1.3f);
+
+        glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f);
+        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f);
+
+        lightObjectShader.setVec3("u_Light.ambient", ambientColor);
+        lightObjectShader.setVec3("u_Light.diffuse", diffuseColor);
 
         // Set uniform matrices (project & view)
         lightObjectShader.setMat4("u_Projection", projection);
