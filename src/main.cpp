@@ -44,6 +44,10 @@ float lastFrame = 0.0f;
 float incAngle = 20.0f;
 float angle = 20.0f;
 
+// light settings
+glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+
+
 int main() {
     // glfw: initialize and configure
     glfwInit(); // CPU
@@ -84,6 +88,8 @@ int main() {
     // These two initializations heavily reduce code clutter in main file.
     Shader shaderOrangee("shaders/secondBasic.vert", "shaders/basicShaderOrange.frag");
     Shader shaderYellow("shaders/secondBasic.vert", "shaders/basicShaderYellow.frag");
+    Shader lightSourceShader("shaders/lightSource.vert", "shaders/lightSource.frag");
+    Shader lightObjectShader("shaders/lightObject.vert", "shaders/lightObject.frag");
 
     float vertices[] = {
         -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
@@ -141,6 +147,7 @@ int main() {
         glm::vec3(1.5f, 0.2f, -1.5f),
         glm::vec3(-1.3f, 1.0f, -1.5f)
     };
+
 
     unsigned int texture1, texture2;
 
@@ -201,6 +208,11 @@ int main() {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *) (3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
+    glBindVertexArray(VAOs[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBOs[1]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *) 0);
+    glEnableVertexAttribArray(0);
 
     /* Keeping this as a reminder for index buffer object setup
     unsigned int indices[] = {
@@ -226,11 +238,6 @@ int main() {
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 
-    shaderOrangee.use();
-    glUniform1i(glGetUniformLocation(shaderOrangee.ID, "texture1"), 0);
-    shaderOrangee.setInt("texture2", 1);
-
-
     /* lookAt matrix example */
     /*  R = camera right vector
      *  U = camera up vector
@@ -244,6 +251,11 @@ int main() {
      *  --          --          --          --
      *  The result of the above matrix is calculated using: glm::lookAt(cameraPos, targetPos, worldUp)
      */
+
+    shaderOrangee.use();
+    glUniform1i(glGetUniformLocation(shaderOrangee.ID, "texture1"), 0);
+    shaderOrangee.setInt("texture2", 1);
+
 
     // render loop
     while (!glfwWindowShouldClose(window)) {
@@ -273,7 +285,7 @@ int main() {
         view = camera.GetViewMatrix();
 
         unsigned int viewLoc = glGetUniformLocation(shaderOrangee.ID, "u_View");
-        shaderOrangee.SetMat4("u_Projection", projection);
+        shaderOrangee.setMat4("u_Projection", projection);
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
 
         shaderOrangee.setFloat("mixValue", mixValue);
@@ -289,10 +301,45 @@ int main() {
             } else {
                 model = glm::rotate(model, glm::radians(angle * i), glm::vec3(1.0f, 0.3f, 0.5f));
             }
-            shaderOrangee.SetMat4("u_Model", model);
+            shaderOrangee.setMat4("u_Model", model);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
+
+        // Switch active shader target (light source)
+        lightSourceShader.use();
+
+        lightSourceShader.setMat4("u_Projection", projection);
+        lightSourceShader.setMat4("u_View", view);
+
+        glm::mat4 lightSourceModel = glm::mat4(1.0f);
+        lightSourceModel = glm::translate(lightSourceModel, lightPos);
+        lightSourceModel = glm::scale(lightSourceModel, glm::vec3(0.2f));
+        lightSourceShader.setMat4("u_Model", lightSourceModel);
+        // Switch active VAO target
+        glBindVertexArray(VAOs[1]);
+        // Draw the lightsource object
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        // Switch active shader target (light object)
+        lightObjectShader.use();
+
+        // Set uniform colors
+        lightObjectShader.setVec3("u_ObjectColor", glm::vec3(1.0f, 0.5f, 0.31f));
+        lightObjectShader.setVec3("u_LightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+
+        // Set uniform matrices (project & view)
+        lightObjectShader.setMat4("u_Projection", projection);
+        lightObjectShader.setMat4("u_View", view);
+
+        // Reset model matrix. Experimenting with not having to re-define model matrices per object type but rather just reset them.
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(lightPos.x - 1.f, lightPos.y - 1.f, lightPos.z + 4.f)); // Try to offset the cube to be affected by light a little from the light source.
+        lightObjectShader.setMat4("u_Model", model);
+
+        // VAO 1 is still bound but will suffice
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         glfwSwapBuffers(window);
         glfwPollEvents();
