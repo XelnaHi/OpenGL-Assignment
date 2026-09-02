@@ -16,6 +16,11 @@ enum Camera_Movement {
     DOWN
 };
 
+enum Camera_Acceleration {
+    PRESSED,
+    RELEASED
+};
+
 const float YAW = -90.f;
 const float PITCH = 0.0f;
 const float SPEED = 2.5f;
@@ -37,8 +42,13 @@ public:
     float MouseSensitivity;
     float Zoom;
 
+    bool IsCameraAccelerated = false;
+    float AccelerationMultiplier = IsCameraAccelerated ? 2.0f : 1.0f;
+
     // constructor using vectors
-    Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM) {
+    Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f),
+           float yaw = YAW, float pitch = PITCH) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED),
+                                                   MouseSensitivity(SENSITIVITY), Zoom(ZOOM) {
         Position = position;
         WorldUp = up;
         Yaw = yaw;
@@ -48,7 +58,9 @@ public:
     }
 
     // constructor using scalar values
-    Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM) {
+    Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw,
+           float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY),
+                          Zoom(ZOOM) {
         Position = glm::vec3(posX, posY, posZ);
         WorldUp = glm::vec3(upX, upY, upZ);
         Yaw = yaw;
@@ -61,21 +73,33 @@ public:
         return glm::lookAt(Position, Position + Front, Up);
     }
 
+    void ProcessCameraAcceleration(Camera_Acceleration shouldAccelerate) {
+
+        if (shouldAccelerate == PRESSED && !IsCameraAccelerated) {
+            AccelerationMultiplier = 2.5f;
+        }
+        if (shouldAccelerate == RELEASED)
+        {
+            AccelerationMultiplier = 1.0f;
+        }
+    }
+
     void ProcessKeyboard(Camera_Movement direction, float deltaTime) {
         float velocity = MovementSpeed * deltaTime;
 
         switch (direction) {
-            case FORWARD: Position += Front * velocity;
+            case FORWARD: Position += Front * velocity * AccelerationMultiplier;
+                std::cout << AccelerationMultiplier << std::endl;
                 break;
-            case BACKWARD: Position -= Front * velocity;
+            case BACKWARD: Position -= Front * velocity * AccelerationMultiplier;
                 break;
-            case LEFT: Position -= Right * velocity;
+            case LEFT: Position -= Right * velocity * AccelerationMultiplier;
                 break;
-            case RIGHT: Position += Right * velocity;
+            case RIGHT: Position += Right * velocity * AccelerationMultiplier;
                 break;
-            case UP: Position += Up * velocity;
+            case UP: Position += Up * velocity * AccelerationMultiplier;
                 break;
-            case DOWN: Position -= Up * velocity;
+            case DOWN: Position -= Up * velocity * AccelerationMultiplier;
         }
     }
 
@@ -98,7 +122,7 @@ public:
     }
 
     void ProcessMouseScroll(float yOffset) {
-        Zoom -= (float)yOffset;
+        Zoom -= (float) yOffset;
 
         if (Zoom < 1.0f)
             Zoom = 1.0f;
@@ -109,7 +133,7 @@ public:
 
 private:
     void updateCameraVectors() {
-    glm::vec3 front;
+        glm::vec3 front;
         front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
         front.y = sin(glm::radians(Pitch));
         front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));

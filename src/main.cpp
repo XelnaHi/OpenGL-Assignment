@@ -304,10 +304,9 @@ int main() {
      *  The result of the above matrix is calculated using: glm::lookAt(cameraPos, targetPos, worldUp)
      */
 
-    shaderOrangee.use();
-    glUniform1i(glGetUniformLocation(shaderOrangee.ID, "texture1"), 0);
-    shaderOrangee.setInt("texture2", 1);
-
+    lightObjectShader.use();
+    lightObjectShader.setInt("u_Material.diffuse", 0);
+    lightObjectShader.setInt("u_Material.specular", 1);
 
     // render loop
     while (!glfwWindowShouldClose(window)) {
@@ -322,61 +321,36 @@ int main() {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // bind textures on corresponding texture units
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture1);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
-
-        // prepare to use the first shader program
-        shaderOrangee.use();
-        glm::mat4 model = glm::mat4(1.0f); //identity matrix
-        glm::mat4 view = glm::mat4(1.0f);
-        glm::mat4 projection = glm::mat4(1.0f);
-        projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1F, 100.0F);
-        view = camera.GetViewMatrix();
-
-        unsigned int viewLoc = glGetUniformLocation(shaderOrangee.ID, "u_View");
-        shaderOrangee.setMat4("u_Projection", projection);
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
-
-        shaderOrangee.setFloat("mixValue", mixValue);
-        glBindVertexArray(VAOs[0]);
-
-        incAngle += 0.01f;
-
-        for (unsigned int i = 0; i < 10; i++) {
-            // calculate the model matrix for each object and pass it to shader before drawing
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, cubePositions[i]);
-            if (i % 3 == 0) {
-                model = glm::rotate(model, glm::radians(incAngle), glm::vec3(1.0f, 0.3f, 0.5f));
-            } else {
-                model = glm::rotate(model, glm::radians(angle * i), glm::vec3(1.0f, 0.3f, 0.5f));
-            }
-            shaderOrangee.setMat4("u_Model", model);
-
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
-
-        // Switch active shader target (light source)
-        lightSourceShader.use();
-
-        lightSourceShader.setMat4("u_Projection", projection);
-        lightSourceShader.setMat4("u_View", view);
-
-        glm::mat4 lightSourceModel = glm::mat4(1.0f);
-        lightSourceModel = glm::translate(lightSourceModel, lightPos);
-        lightSourceModel = glm::scale(lightSourceModel, glm::vec3(0.2f));
-        lightSourceShader.setMat4("u_Model", lightSourceModel);
-
-        // Switch active VAO target
-        glBindVertexArray(VAOs[1]);
-        // Draw the lightsource object
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-
-        // Switch active shader target (light object)
         lightObjectShader.use();
+        // lightObjectShader.setVec3("u_Light.direction", glm::vec3(-0.2f, -1.0f, -0.3f)); // directional light
+        // lightObjectShader.setVec3("u_Light.position", lightPos); // point light
+        lightObjectShader.setVec3("u_Light.position", camera.Position); // spotlight
+        lightObjectShader.setVec3("u_Light.direction", camera.Front); // spotlight
+        lightObjectShader.setFloat("u_Light.cutOff", glm::cos(glm::radians(12.5f))); // spotlight inner cutoff
+        lightObjectShader.setFloat("u_Light.outerCutOff", glm::cos(glm::radians(17.5f))); // spotlight outer cutoff
+        lightObjectShader.setVec3("m_ViewPos", camera.Position);
+
+        // Set light source uniforms
+        lightObjectShader.setVec3("u_Light.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
+        lightObjectShader.setVec3("u_Light.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
+        lightObjectShader.setVec3("u_Light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+        // Point Light
+        lightObjectShader.setFloat("u_Light.constant", 1.0f);
+        lightObjectShader.setFloat("u_Light.linear", 0.09f);
+        lightObjectShader.setFloat("u_Light.quadratic", 0.032f);
+
+        // Set uniform material properties
+        lightObjectShader.setFloat("u_Material.shininess", 32.0f);
+        // determines the spread of light originating from its ppint of impact
+
+        // view/projection transformations
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1F,
+                                                100.0F);
+        glm::mat4 view = camera.GetViewMatrix();
+        lightObjectShader.setMat4("u_Projection", projection);
+        lightObjectShader.setMat4("u_View", view);
+        glm::mat4 model = glm::mat4(1.0f);
+        lightObjectShader.setMat4("u_Model", model);
 
         // assign the non-specular texture to textureSlot 0
         lightObjectShader.setInt("u_Material.diffuse", 0);
@@ -392,17 +366,21 @@ int main() {
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, emissionMap);
 
-        // Set uniform colorssasaasaweesadsa
-        lightObjectShader.setVec3("u_lightSourcePos", lightPos);
-        lightObjectShader.setVec3("u_ViewPos", camera.Position);
+        incAngle += 0.01f;
 
-        // Set uniform material properties
-        lightObjectShader.setFloat("u_Material.shininess", 32.0f);
+        for (unsigned int i = 0; i < 10; i++) {
+            // calculate the model matrix for each object and pass it to shader before drawing
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, cubePositions[i]);
+            if (i % 3 == 0) {
+                model = glm::rotate(model, glm::radians(incAngle), glm::vec3(1.0f, 0.3f, 0.5f));
+            } else {
+                model = glm::rotate(model, glm::radians(angle * i), glm::vec3(1.0f, 0.3f, 0.5f));
+            }
+            lightObjectShader.setMat4("u_Model", model);
 
-        // Set light source uniforms
-        lightObjectShader.setVec3("u_Light.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
-        lightObjectShader.setVec3("u_Light.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
-        lightObjectShader.setVec3("u_Light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
 
         // Source light colors
         glm::vec3 lightColor;
@@ -414,11 +392,9 @@ int main() {
         glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f);
 
         lightObjectShader.setVec3("u_Light.ambient", ambientColor);
-        lightObjectShader.setVec3("u_Light.diffuse", glm::vec3(1.0f, 1.0f, 1.0f));// change to diffuseColor to get randomized color values based on the color of the light source.
+        lightObjectShader.setVec3("u_Light.diffuse", glm::vec3(1.0f, 1.0f, 1.0f));
+        // change to diffuseColor to get randomized color values based on the color of the light source.
 
-        // Set uniform matrices (project & view)
-        lightObjectShader.setMat4("u_Projection", projection);
-        lightObjectShader.setMat4("u_View", view);
 
         // Reset model matrix. Experimenting with not having to re-define model matrices per object type but rather just reset them.
         float time = glfwGetTime();
@@ -453,6 +429,13 @@ int main() {
 void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        camera.ProcessCameraAcceleration(PRESSED);
+
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE)
+        camera.ProcessCameraAcceleration(RELEASED);
+
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.ProcessKeyboard(FORWARD, deltaTime);
