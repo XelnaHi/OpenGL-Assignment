@@ -91,50 +91,50 @@ int main() {
     Shader lightSourceShader("shaders/lightSource.vert", "shaders/lightSource.frag");
     Shader lightObjectShader("shaders/lightObject.vert", "shaders/lightObject.frag");
 
-float vertices[] = {
-    // positions          // normals           // texture coords
-    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
+    float vertices[] = {
+        // positions          // normals           // texture coords
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
+        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
+        -0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
 
-    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
 
-    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+        -0.5f, 0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+        -0.5f, -0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
 
-     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
 
-    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,
+        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        -0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
 
-    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
-};
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+        0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f
+    };
 
     glm::vec3 cubePositions[] = {
         glm::vec3(0.0f, 0.0f, 0.0f),
@@ -219,15 +219,15 @@ float vertices[] = {
     glEnableVertexAttribArray(0);
 
     // vertex surface normal
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*) (3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
     // vertex textures
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*) (6 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
     unsigned int diffuseMap;
-    // texture 3 setup
+    // texture setup
     glGenTextures(1, &diffuseMap);
     glBindTexture(GL_TEXTURE_2D, diffuseMap);
 
@@ -258,10 +258,32 @@ float vertices[] = {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    // load and generate texture 3
     data = stbi_load("res/textures/container2_specular.png", &width, &height, &nrChannels, 0);
     if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        GLenum format = (nrChannels == 4) ? GL_RGBA : GL_RGB;
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    } else {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+
+    // texture 4 setup
+    unsigned int emissionMap;
+    // texture 4 setup
+    glGenTextures(1, &emissionMap);
+    glBindTexture(GL_TEXTURE_2D, emissionMap);
+
+    // texture 4 configs
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // load and generate texture 4
+    data = stbi_load("res/textures/matrix.jpg", &width, &height, &nrChannels, 0);
+    if (data) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     } else {
         std::cout << "Failed to load texture" << std::endl;
@@ -321,12 +343,13 @@ float vertices[] = {
         shaderOrangee.setFloat("mixValue", mixValue);
         glBindVertexArray(VAOs[0]);
 
+        incAngle += 0.01f;
+
         for (unsigned int i = 0; i < 10; i++) {
             // calculate the model matrix for each object and pass it to shader before drawing
             model = glm::mat4(1.0f);
             model = glm::translate(model, cubePositions[i]);
             if (i % 3 == 0) {
-                incAngle += 0.01f;
                 model = glm::rotate(model, glm::radians(incAngle), glm::vec3(1.0f, 0.3f, 0.5f));
             } else {
                 model = glm::rotate(model, glm::radians(angle * i), glm::vec3(1.0f, 0.3f, 0.5f));
@@ -365,33 +388,33 @@ float vertices[] = {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, specularMap);
 
+        lightObjectShader.setInt("u_Material.emission", 2);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, emissionMap);
 
-        // Set uniform colors
+        // Set uniform colorssasaasaweesadsa
         lightObjectShader.setVec3("u_lightSourcePos", lightPos);
         lightObjectShader.setVec3("u_ViewPos", camera.Position);
 
         // Set uniform material properties
-        lightObjectShader.setVec3("u_Material.ambient", glm::vec3(1.0f, 0.5f, 0.31f));
-        lightObjectShader.setVec3("u_Material.diffuse", glm::vec3(1.0f, 0.5f, 0.31f));
-        lightObjectShader.setVec3("u_Material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
         lightObjectShader.setFloat("u_Material.shininess", 32.0f);
 
         // Set light source uniforms
-        lightObjectShader.setVec3("u_Light.ambient",  glm::vec3(0.2f, 0.2f, 0.2f));
-        lightObjectShader.setVec3("u_Light.diffuse",  glm::vec3(0.5f, 0.5f, 0.5f));
+        lightObjectShader.setVec3("u_Light.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
+        lightObjectShader.setVec3("u_Light.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
         lightObjectShader.setVec3("u_Light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
 
         // Source light colors
         glm::vec3 lightColor;
-        lightColor.x = (float)sin(glfwGetTime() * 2.0f);
-        lightColor.y = (float)sin(glfwGetTime() * 0.7f);
-        lightColor.z = (float)sin(glfwGetTime() * 1.3f);
+        lightColor.x = (float) sin(glfwGetTime() * 2.0f);
+        lightColor.y = (float) sin(glfwGetTime() * 0.7f);
+        lightColor.z = (float) sin(glfwGetTime() * 1.3f);
 
-        glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f);
+        glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
         glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f);
 
         lightObjectShader.setVec3("u_Light.ambient", ambientColor);
-        lightObjectShader.setVec3("u_Light.diffuse", glm::vec3(1.0f, 1.0f, 1.0f)); // change to diffuse color to get randomized color values based on the color of the light source.
+        lightObjectShader.setVec3("u_Light.diffuse", glm::vec3(1.0f, 1.0f, 1.0f));// change to diffuseColor to get randomized color values based on the color of the light source.
 
         // Set uniform matrices (project & view)
         lightObjectShader.setMat4("u_Projection", projection);
@@ -399,9 +422,10 @@ float vertices[] = {
 
         // Reset model matrix. Experimenting with not having to re-define model matrices per object type but rather just reset them.
         float time = glfwGetTime();
-        float sinAng = time * 100.0f + sin(time * 2) * 20 ;
+        float sinAng = time * 100.0f + sin(time * 2) * 20;
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(lightPos.x, lightPos.y - 1.f, lightPos.z + 2.f)); // Try to offset the cube to be affected by light a little from the light source.
+        model = glm::translate(model, glm::vec3(lightPos.x, lightPos.y - 1.f, lightPos.z + 2.f));
+        // Try to offset the cube to be affected by light a little from the light source.
         model = glm::rotate(model, glm::radians(sinAng), glm::vec3(lightPos.x, lightPos.y - 1.f, lightPos.z + 2.f));
         lightObjectShader.setMat4("u_Model", model);
 
