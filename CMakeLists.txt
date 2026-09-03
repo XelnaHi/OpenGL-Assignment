@@ -12,6 +12,23 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(FetchContent)
 
+# --- Assimp ---
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_ZLIB ON CACHE BOOL "" FORCE)          # avoid needing system zlib
+set(ASSIMP_NO_EXPORT ON CACHE BOOL "" FORCE)           # we only need importing, not exporting
+set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE) # Assimp's own -Wall build can be noisy
+
+FetchContent_Declare(
+        assimp
+        GIT_REPOSITORY https://github.com/assimp/assimp.git
+        GIT_TAG v5.4.3
+        GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(assimp)
+
 # Keep third-party projects small and quiet.
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -56,6 +73,7 @@ target_link_libraries(shader_course
         glad
         stb
         glm::glm
+        assimp
 )
 
 if (MSVC)
