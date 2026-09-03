@@ -194,18 +194,16 @@ int main() {
     stbi_image_free(data);
 
 
-    unsigned int VBOs[2], VAOs[2]; // CPU
-    glGenVertexArrays(2, VAOs); // Generates two separate vertex array objects (vao:s).  CPU
-    glGenBuffers(2, VBOs); // Generates two separate vertex buffer objects (vbo:s). CPU
+    unsigned int VBOs[2], VAOs[2]; // CPU-isolated call.
+    glGenVertexArrays(2, VAOs); // Generates unique integer ID's on the GPU. The call itself to store these values are issued via CPU. Will be used to store configurations detailing how memory on GPU is supposed to be read. (see AttribPointers below.)
+    glGenBuffers(2, VBOs); // Generates unique integer ID's for buffer objects on GPU. Call is issued from CPU. The buffer will later the allocated memory in GPU.
 
     // light source object
-    glBindVertexArray(VAOs[0]);
-    // Sets the current vertex array object target. CPU. VAO stores the vertax buffer layout, which is a way to determine which set of bytes correspond to which "graphical element", such as vertex positions, colors, textures, textureID's, etc.
-    glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]); // CPU.
-
+    glBindVertexArray(VAOs[0]); // Sets the current active vertex array. Writing data/configurations will be related to this specific VertexArray. VAO stores the vertex buffer layout, which is a way to determine which set of bytes correspond to which "graphical element", such as vertex positions, colors, textures, textureID's, etc.
+    glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]); // Sets the current active buffer object.
     // vertex positions
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) 0);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); // Writes to (allocates) memory on the GPU holding the specified data.
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) 0); // Specifies the memory layout of the buffer object, telling the GPU how the sequential data should be interpreted.
     glEnableVertexAttribArray(0);
 
 
