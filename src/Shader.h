@@ -15,7 +15,7 @@
 
 class Shader {
 public:
-    // The program ID
+    // The program (shader) ID
     unsigned int ID;
 
     // constructor reads and builds shader

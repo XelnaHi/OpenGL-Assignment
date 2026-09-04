@@ -44,7 +44,7 @@ Shader::Shader(const char *vertexPath, const char *fragmentPath) {
     const char *fShaderCode = fragmentCode.c_str();
 
 
-    // COMPILE SHADERS
+    // compile shaders
     unsigned int vertex, fragment;
     int success;
     char infoLog[512];
@@ -54,7 +54,7 @@ Shader::Shader(const char *vertexPath, const char *fragmentPath) {
     glShaderSource(vertex, 1, &vShaderCode, NULL);
     glCompileShader(vertex);
 
-    // print errors if there are any
+    // print potential errors
     glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
     if (!success) {
         glGetShaderInfoLog(vertex, 512, NULL, infoLog);
@@ -86,7 +86,7 @@ Shader::Shader(const char *vertexPath, const char *fragmentPath) {
         std::cout << "ERROR::SHADER::PROGRAM::LINKING_FA    ILED\n" << infoLog << std::endl;
     }
 
-    // shaders have now been linked to progam and can safely be discarded
+    // shaders have now been linked to program and can safely be discarded
     glDeleteShader(vertex);
     glDeleteShader(fragment);
 }

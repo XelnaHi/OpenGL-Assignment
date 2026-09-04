@@ -13,6 +13,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 include(FetchContent)
 
 # --- Assimp ---
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
@@ -60,6 +61,8 @@ add_executable(shader_course
         src/Camera.h
         src/Mesh.cpp
         src/Mesh.h
+        src/Model.cpp
+        src/Model.h
 )
 
 add_library(stb STATIC
@@ -77,6 +80,10 @@ target_link_libraries(shader_course
         glm::glm
         assimp
 )
+
+if (MINGW)
+    target_link_options(shader_course PRIVATE -static-libgcc -static-libstdc++ -static)
+endif()
 
 if (MSVC)
     target_compile_options(shader_course PRIVATE /W4 /permissive-)

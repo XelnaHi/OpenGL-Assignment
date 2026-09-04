@@ -6,6 +6,7 @@ layout (location = 2) in vec2 aTexCoords;
 uniform mat4 u_Model;
 uniform mat4 u_View;
 uniform mat4 u_Projection;
+uniform float u_Time;
 
 out vec3 FragPos;
 out vec3 Normal;

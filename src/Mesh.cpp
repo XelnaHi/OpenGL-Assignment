@@ -13,7 +13,7 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std:
     setupMesh();
 }
 
-void Mesh::draw(Shader shader) {
+void Mesh::draw(Shader &shader) {
 
     /* Below is a flexible way of deducing the amount of specific texture types. It operates on a strict assumption that texture uniforms follow the following naming convention;
     uniform sampler2D texture_diffuse1;
@@ -29,19 +29,18 @@ void Mesh::draw(Shader shader) {
 
     for (unsigned int i = 0; i < textures.size(); i++) {
 
-        glActiveTexture(GL_TEXTURE0 + i); // selects a slot, for example slot 3.
+        glActiveTexture(GL_TEXTURE0 + i); // selects a texture slot, for example slot 3.
 
         std::string number;
         std::string name = textures[i].type;
         if (name == "texture_diffuse") {
 
-            diffuseNr++;
-            number = std::to_string(diffuseNr);
+            number = std::to_string(diffuseNr++);
         } else if (name == "texture_specular") {
             number = std::to_string(specularNr++);
         }
 
-        shader.setInt(("u_Material." + name + number).c_str(), i); // number here can be whatever, depending on the order of declarations and the amount of declared texture uniforms, following the above naming conventions. The uniform gets assigned the texture slot id, which tells the (for example) sampler2D uniform to read from that particular texture slot.
+        shader.setInt(("u_Material." + name + number).c_str(), i); // number here can be whatever (but same as the number of the texture slot we've activated above), depending on the order of declarations and the amount of declared texture uniforms, following the above naming conventions. The uniform gets assigned the texture slot id, which tells the (for example) sampler2D uniform to read from that particular texture slot.
         glBindTexture(GL_TEXTURE_2D, textures[i].id); // we store in the texture slot an id that belongs to a specific texture object containing the texture data, such as pixel data, mipmaps and format.
     }
     glActiveTexture(GL_TEXTURE0);
