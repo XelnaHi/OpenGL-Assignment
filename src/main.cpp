@@ -56,6 +56,12 @@ float leafHeight = 0.0f; // keep track current height position
 bool leafTargetUp = false; // determine whether the leaf should go up or down
 bool fKeyHeld = false; // used to limit key presses to a single press instead of per frame, which can be many
 
+// leaf rotation
+float leafSpingAngle = 10.0f;
+float leafSpingAngleUp = leafSpingAngle + 100.0f;
+float leafSpingAngleDown = leafSpingAngle + 100.0f * deltaTime;
+
+
 int main() {
     // glfw: initialize and configure
     glfwInit(); // CPU
@@ -157,12 +163,31 @@ int main() {
     };
 
     glm::vec3 leafPositions[] = {
-        glm::vec3(0.0f, -2.0f, 0.0f),
-        glm::vec3(0.3f, -2.0f, 0.0f),
-        glm::vec3(-0.3f, -2.0f, 0.0f),
-        glm::vec3(0.6f, -2.0f, 0.0f),
-        glm::vec3(-0.6f, -2.0f, 0.0f),
-
+        glm::vec3(-0.42f, -1.45f, 0.36f),
+        glm::vec3(-1.03f, -1.06f, -0.32f),
+        glm::vec3(-1.06f, -1.09f, -1.11f),
+        glm::vec3(-0.16f, -1.53f, -0.98f),
+        glm::vec3(-0.18f, -0.77f, -0.90f),
+        glm::vec3(-0.66f, -0.97f, 1.07f),
+        glm::vec3(0.19f, -1.20f, 1.14f),
+        glm::vec3(-1.09f, -0.74f, -0.50f),
+        glm::vec3(-0.85f, -1.48f, -0.46f),
+        glm::vec3(0.76f, -1.42f, 0.20f),
+        glm::vec3(0.33f, -1.23f, 0.11f),
+        glm::vec3(-1.05f, -1.54f, -0.71f),
+        glm::vec3(0.43f, -1.17f, -0.45f),
+        glm::vec3(0.21f, -1.15f, -0.48f),
+        glm::vec3(0.71f, -0.90f, -0.61f),
+        glm::vec3(0.18f, -1.07f, 0.90f),
+        glm::vec3(0.55f, -1.31f, 1.15f),
+        glm::vec3(-0.92f, -1.18f, 0.62f),
+        glm::vec3(-0.84f, -1.11f, -1.11f),
+        glm::vec3(0.40f, -0.84f, 0.18f),
+        glm::vec3(0.90f, -1.29f, 0.47f),
+        glm::vec3(0.23f, -1.02f, -0.11f),
+        glm::vec3(0.82f, -0.66f, -0.06f),
+        glm::vec3(0.39f, -1.54f, 0.48f),
+        glm::vec3(0.35f, -0.61f, 0.77f),
     };
 
 
@@ -367,7 +392,7 @@ int main() {
         processInput(window);
 
         // clear previous frame and set window background
-        glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         cubeShader.use();
@@ -388,8 +413,8 @@ int main() {
         // These light settings get repeatedly set every time we switch shaders, and is a huge code smell. Should be refactored to a function to minimze code clutter.
         // Directional light
         cubeShader.setVec3("u_DirLight.direction", glm::vec3(-0.2f, -1.0f, -0.3f));
-        cubeShader.setVec3("u_DirLight.ambient", glm::vec3(0.1f, 0.5f, 0.3f));
-        cubeShader.setVec3("u_DirLight.diffuse", glm::vec3(0.2f, 0.91f, 0.043f));
+        cubeShader.setVec3("u_DirLight.ambient", glm::vec3(0.5f, 0.5f, 0.3f));
+        cubeShader.setVec3("u_DirLight.diffuse", glm::vec3(0.05f, 0.76f, 0.64f));
         cubeShader.setVec3("u_DirLight.specular", glm::vec3(0.5f, 0.5f, 0.5f));
 
         // Point light #1
@@ -495,7 +520,7 @@ int main() {
         // Directional light
         leafShader.setVec3("u_DirLight.direction", glm::vec3(-0.2f, -1.0f, -0.3f));
         leafShader.setVec3("u_DirLight.ambient", glm::vec3(0.1f, 0.5f, 0.3f));
-        leafShader.setVec3("u_DirLight.diffuse", glm::vec3(0.2f, 0.91f, 0.043f));
+        cubeShader.setVec3("u_DirLight.diffuse", glm::vec3(0.05f, 0.76f, 0.64f));
         leafShader.setVec3("u_DirLight.specular", glm::vec3(0.5f, 0.5f, 0.5f));
 
         // Point light #1
@@ -563,19 +588,35 @@ int main() {
 
         glm::vec3 yOffset = glm::vec3(.0f, 1.0f, 0.0f);
 
+
         // alternate between positive and negative y-translation based on target flag
         const float targetY = 2.0f;
         const float decayRate = 1.5f;
         float target = leafTargetUp ? targetY : 0.0f;
         leafHeight += (target - leafHeight) * (1.0f - std::exp(-decayRate * deltaTime));
 
-        for (int i = 0; i < 4; ++i) {
+        float angleTargetUp = 500.0f;
+        float angleTarget = leafTargetUp ? angleTargetUp : static_cast<float>(sin(glfwGetTime())) * 45.0f;
+        leafSpingAngle += (angleTarget - leafSpingAngle) * (1.0f - std::exp(-decayRate * deltaTime));
+
+        const size_t leafCount = sizeof(leafPositions) / sizeof(leafPositions[0]);
+        // this is basically division the size of the array by the size of data type it stores in order to get the amount of elements. Could use a vector to get access to .size(), but all OpoenGL docs so far seem to use C-style arrays, so I'm sticking with this for now.
+
+        const float vibrationRate = static_cast<float>(sin(glfwGetTime() * 100));
+        bool isVibrationThreshold = leafHeight >= targetY - 0.8f;
+        for (int i = 0; i < leafCount; ++i) {
             // set translation/scale/rotation
+            glm::vec3 leafWorldPos = leafPositions[i] + yOffset * leafHeight;
+
+            if (isVibrationThreshold) {
+                leafWorldPos.x += vibrationRate * 0.002f;
+            }
             model = glm::mat4(1.0f);
-            model = glm::translate(model, leafPositions[i]);
-            model = glm::translate(model, yOffset * leafHeight);
-            model = glm::scale(model, glm::vec3(0.2f));
-            model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+            model = glm::translate(model, leafWorldPos);
+            model = glm::scale(model, glm::vec3(0.1f));
+
+            model = glm::rotate(model, glm::radians(leafSpingAngle),
+                                glm::vec3(0.0f, 1.0f, 0.0f));
 
             leafShader.setMat4("u_Model", model);
 
