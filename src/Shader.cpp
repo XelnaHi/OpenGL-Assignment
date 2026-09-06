@@ -119,6 +119,52 @@ void Shader::setMat4(const std::string &name, glm::mat4 m4) {
     glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(m4));
 }
 
+void Shader::setDirectionalLight(glm::vec3 direction, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular) {
+    glUniform3f(glGetUniformLocation(ID, "u_DirLight.direction"), direction.x, direction.y, direction.z);
+    glUniform3f(glGetUniformLocation(ID, "u_DirLight.ambient"), ambient.x, ambient.y, ambient.z);
+    glUniform3f(glGetUniformLocation(ID, "u_DirLight.diffuse"), diffuse.x, diffuse.y, diffuse.z);
+    glUniform3f(glGetUniformLocation(ID, "u_DirLight.specular"), specular.x, specular.y, specular.z);
+}
+
+void Shader::setPointLight(unsigned int index, glm::vec3 position, glm::vec3 ambient, glm::vec3 diffuse,
+                           glm::vec3 specular, float constant, float linear, float quadratic) {
+    // vectors
+    std::string positionFormat = "u_PointLights[" + std::to_string(index) + "].position";
+    std::string ambientFormat = "u_PointLights[" + std::to_string(index) + "].ambient";
+    std::string diffuseFormat = "u_PointLights[" + std::to_string(index) + "].diffuse";
+    std::string specularFormat = "u_PointLights[" + std::to_string(index) + "].specular";
+
+    glUniform3f(glGetUniformLocation(ID, positionFormat.c_str()), position.x, position.y, position.z);
+    glUniform3f(glGetUniformLocation(ID, ambientFormat.c_str()), ambient.x, ambient.y, ambient.z);
+    glUniform3f(glGetUniformLocation(ID, diffuseFormat.c_str()), diffuse.x, diffuse.y, diffuse.z);
+    glUniform3f(glGetUniformLocation(ID, specularFormat.c_str()), specular.x, specular.y, specular.z);
+
+    // floats
+    std::string constantFormat = "u_PointLights[" + std::to_string(index) + "].constant";
+    std::string linearFormat = "u_PointLights[" + std::to_string(index) + "].linear";
+    std::string quadraticFormat = "u_PointLights[" + std::to_string(index) + "].quadratic";
+
+    glUniform1f(glGetUniformLocation(ID, constantFormat.c_str()), constant);
+    glUniform1f(glGetUniformLocation(ID, linearFormat.c_str()), linear);
+    glUniform1f(glGetUniformLocation(ID, quadraticFormat.c_str()), quadratic);
+}
+
+void Shader::setSpotLight(glm::vec3 position, glm::vec3 direction, float cutOff, float outerCutOff,
+                          glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular,
+                          float constant, float linear, float quadratic) {
+    glUniform3f(glGetUniformLocation(ID, "u_SpotLight.position"), position.x, position.y, position.z);
+    glUniform3f(glGetUniformLocation(ID, "u_SpotLight.direction"), direction.x, direction.y, direction.z);
+    glUniform1f(glGetUniformLocation(ID, "u_SpotLight.cutOff"), cutOff);
+    glUniform1f(glGetUniformLocation(ID, "u_SpotLight.outerCutOff"), outerCutOff);
+
+    glUniform3f(glGetUniformLocation(ID, "u_SpotLight.ambient"), ambient.x, ambient.y, ambient.z);
+    glUniform3f(glGetUniformLocation(ID, "u_SpotLight.diffuse"), diffuse.x, diffuse.y, diffuse.z);
+    glUniform3f(glGetUniformLocation(ID, "u_SpotLight.specular"), specular.x, specular.y, specular.z);
+
+    glUniform1f(glGetUniformLocation(ID, "u_SpotLight.constant"), constant);
+    glUniform1f(glGetUniformLocation(ID, "u_SpotLight.linear"), linear);
+    glUniform1f(glGetUniformLocation(ID, "u_SpotLight.quadratic"), quadratic);
+}
 
 void Shader::Unbind() {
     glDeleteProgram(ID);

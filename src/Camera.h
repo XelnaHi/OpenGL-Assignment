@@ -89,7 +89,6 @@ public:
 
         switch (direction) {
             case FORWARD: Position += Front * velocity * AccelerationMultiplier;
-                std::cout << AccelerationMultiplier << std::endl;
                 break;
             case BACKWARD: Position -= Front * velocity * AccelerationMultiplier;
                 break;

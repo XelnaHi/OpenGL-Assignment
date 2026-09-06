@@ -23,8 +23,8 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 
 // screen settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1200;
+const unsigned int SCR_HEIGHT = 800;
 
 // uniform values
 float mixValue = 0.2f;
@@ -189,6 +189,19 @@ int main() {
         glm::vec3(0.39f, -1.54f, 0.48f),
         glm::vec3(0.35f, -0.61f, 0.77f),
     };
+
+
+    const size_t leafCount = sizeof(leafPositions) / sizeof(leafPositions[0]);
+    // this is basically division the size of the array by the size of data type it stores in order to get the amount of elements. Could use a vector to get access to .size(), but all OpoenGL docs so far seem to use C-style arrays, so I'm sticking with this for now.
+
+    srand(time(0));
+    // the leaf model scaled to 1.0 is **huge**! thus, the desired scaling right now is quite drastic (somewhere between 0.1 and 0.01)
+    float leafScales[leafCount];
+    for (size_t i = 0; i < leafCount; i++) {
+        int randomNr = rand() % 6;
+        float modelScale = 0.1 / randomNr;
+        leafScales[i] = modelScale;
+    }
 
 
     unsigned int texture1, texture2;
@@ -369,7 +382,7 @@ int main() {
     };
 
     glm::vec3 pointLightColors[] = {
-        glm::vec3(1.0f, 0.6f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.2f),
         glm::vec3(1.0f, 0.0f, 0.0f),
         glm::vec3(1.0f, 1.0, 0.0),
         glm::vec3(0.2f, 0.2f, 1.0f)
@@ -410,64 +423,41 @@ int main() {
         glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f);
 */
 
-        // These light settings get repeatedly set every time we switch shaders, and is a huge code smell. Should be refactored to a function to minimze code clutter.
         // Directional light
-        cubeShader.setVec3("u_DirLight.direction", glm::vec3(-0.2f, -1.0f, -0.3f));
-        cubeShader.setVec3("u_DirLight.ambient", glm::vec3(0.5f, 0.5f, 0.3f));
-        cubeShader.setVec3("u_DirLight.diffuse", glm::vec3(0.05f, 0.76f, 0.64f));
-        cubeShader.setVec3("u_DirLight.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+        cubeShader.setDirectionalLight(glm::vec3(-0.2f, -1.0f, -0.3f), glm::vec3(0.5f, 0.5f, 0.3f),
+                                       glm::vec3(0.05f, 0.76f, 0.64f), glm::vec3(0.5f, 0.5f, 0.5f));
 
         // Point light #1
-        cubeShader.setVec3("u_PointLights[0].position", pointLightPositions[0]);
-        cubeShader.setVec3("u_PointLights[0].ambient",
-                           glm::vec3(pointLightColors[0].x * 0.1, pointLightColors[0].y * 0.1,
-                                     pointLightColors[0].z * 0.1));
-        cubeShader.setVec3("u_PointLights[0].diffuse",
-                           glm::vec3(pointLightColors[0].x, pointLightColors[0].y, pointLightColors[0].z));
-        cubeShader.setVec3("u_PointLights[0].specular",
-                           glm::vec3(pointLightColors[0].x, pointLightColors[0].y, pointLightColors[0].z));
-        cubeShader.setFloat("u_PointLights[0].constant", 1.0f);
-        cubeShader.setFloat("u_PointLights[0].linear", 0.09f);
-        cubeShader.setFloat("u_PointLights[0].quadratic", 0.032f);
+        cubeShader.setPointLight(0, pointLightPositions[0],
+                                 glm::vec3(pointLightColors[0].x * 0.1, pointLightColors[0].y * 0.1,
+                                           pointLightColors[0].z * 0.1),
+                                 glm::vec3(pointLightColors[0].x, pointLightColors[0].y, pointLightColors[0].z),
+                                 glm::vec3(pointLightColors[0].x, pointLightColors[0].y, pointLightColors[0].z),
+                                 1.0f, 0.09f, 0.032f);
 
         // Point light #2
-        cubeShader.setVec3("u_PointLights[1].position", pointLightPositions[1]);
-        cubeShader.setVec3("u_PointLights[1].ambient", glm::vec3(0.05f, 0.05f, 0.05f));
-        cubeShader.setVec3("u_PointLights[1].diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
-        cubeShader.setVec3("u_PointLights[1].specular", glm::vec3(1.0f, 1.0f, 1.0f));
-        cubeShader.setFloat("u_PointLights[1].constant", 1.0f);
-        cubeShader.setFloat("u_PointLights[1].linear", 0.09f);
-        cubeShader.setFloat("u_PointLights[1].quadratic", 0.032f);
+        cubeShader.setPointLight(1, pointLightPositions[1],
+                                 glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.8f, 0.8f, 0.8f),
+                                 glm::vec3(1.0f, 1.0f, 1.0f),
+                                 1.0f, 0.09f, 0.032f);
 
         // Point light #3
-        cubeShader.setVec3("u_PointLights[2].position", pointLightPositions[2]);
-        cubeShader.setVec3("u_PointLights[2].ambient", glm::vec3(0.05f, 0.05f, 0.05f));
-        cubeShader.setVec3("u_PointLights[2].diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
-        cubeShader.setVec3("u_PointLights[2].specular", glm::vec3(1.0f, 1.0f, 1.0f));
-        cubeShader.setFloat("u_PointLights[2].constant", 1.0f);
-        cubeShader.setFloat("u_PointLights[2].linear", 0.09f);
-        cubeShader.setFloat("u_PointLights[2].quadratic", 0.032f);
+        cubeShader.setPointLight(2, pointLightPositions[2],
+                                 glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.8f, 0.8f, 0.8f),
+                                 glm::vec3(1.0f, 1.0f, 1.0f),
+                                 1.0f, 0.09f, 0.032f);
 
         // Point light #4
-        cubeShader.setVec3("u_PointLights[3].position", pointLightPositions[3]);
-        cubeShader.setVec3("u_PointLights[3].ambient", glm::vec3(0.05f, 0.05f, 0.05f));
-        cubeShader.setVec3("u_PointLights[3].diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
-        cubeShader.setVec3("u_PointLights[3].specular", glm::vec3(1.0f, 1.0f, 1.0f));
-        cubeShader.setFloat("u_PointLights[3].constant", 1.0f);
-        cubeShader.setFloat("u_PointLights[3].linear", 0.09f);
-        cubeShader.setFloat("u_PointLights[3].quadratic", 0.032f);
+        cubeShader.setPointLight(3, pointLightPositions[3],
+                                 glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.8f, 0.8f, 0.8f),
+                                 glm::vec3(1.0f, 1.0f, 1.0f),
+                                 1.0f, 0.09f, 0.032f);
 
-        // u_SpotLight
-        cubeShader.setVec3("u_SpotLight.position", camera.Position);
-        cubeShader.setVec3("u_SpotLight.direction", camera.Front);
-        cubeShader.setVec3("u_SpotLight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
-        cubeShader.setVec3("u_SpotLight.diffuse", glm::vec3(1.0f, 1.0f, 1.0f));
-        cubeShader.setVec3("u_SpotLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
-        cubeShader.setFloat("u_SpotLight.constant", 1.0f);
-        cubeShader.setFloat("u_SpotLight.linear", 0.09f);
-        cubeShader.setFloat("u_SpotLight.quadratic", 0.032f);
-        cubeShader.setFloat("u_SpotLight.cutOff", glm::cos(glm::radians(12.5f)));
-        cubeShader.setFloat("u_SpotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
+        // Spotlight
+        // cubeShader.setSpotLight(camera.Position, camera.Front,
+        //    glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.0f)),
+        //    glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f),
+        //    1.0f, 0.09f, 0.032f);
 
         cubeShader.setFloat("u_Time", currentFrame);
 
@@ -507,7 +497,7 @@ int main() {
         //     } else {
         //         model = glm::rotate(model, glm::radians(angle * i), glm::vec3(1.0f, 0.3f, 0.5f));
         //     }
-        //     CubeShader.setMat4("u_Model", model);
+        //     cubeShader.setMat4("u_Model", model);
         //
         //     glDrawArrays(GL_TRIANGLES, 0, 36);
         // }
@@ -518,64 +508,51 @@ int main() {
         leafShader.setFloat("u_Material.shininess", 32.0f);
 
         // Directional light
-        leafShader.setVec3("u_DirLight.direction", glm::vec3(-0.2f, -1.0f, -0.3f));
-        leafShader.setVec3("u_DirLight.ambient", glm::vec3(0.1f, 0.5f, 0.3f));
-        cubeShader.setVec3("u_DirLight.diffuse", glm::vec3(0.05f, 0.76f, 0.64f));
-        leafShader.setVec3("u_DirLight.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+        leafShader.setDirectionalLight(glm::vec3(-0.2f, -1.0f, -0.3f), glm::vec3(0.1f, 0.5f, 0.3f),
+                                       glm::vec3(0.05f, 0.76f, 0.64f), glm::vec3(0.5f, 0.5f, 0.5f));
 
         // Point light #1
-        leafShader.setVec3("u_PointLights[0].position", pointLightPositions[0]);
-        leafShader.setVec3("u_PointLights[0].ambient",
-                           glm::vec3(pointLightColors[0].x * 0.1, pointLightColors[0].y * 0.1,
-                                     pointLightColors[0].z * 0.1));
-        leafShader.setVec3("u_PointLights[0].diffuse",
-                           glm::vec3(pointLightColors[0].x, pointLightColors[0].y, pointLightColors[0].z));
-        leafShader.setVec3("u_PointLights[0].specular",
-                           glm::vec3(pointLightColors[0].x, pointLightColors[0].y, pointLightColors[0].z));
-        leafShader.setFloat("u_PointLights[0].constant", 1.0f);
-        leafShader.setFloat("u_PointLights[0].linear", 0.09f);
-        leafShader.setFloat("u_PointLights[0].quadratic", 0.032f);
+        leafShader.setPointLight(0, pointLightPositions[0], glm::vec3(pointLightColors[0].x * 0.1,
+                                                                      pointLightColors[0].y * 0.1,
+                                                                      pointLightColors[0].z * 0.1),
+                                 glm::vec3(pointLightColors[0].x, pointLightColors[0].y, pointLightColors[0].z),
+                                 glm::vec3(pointLightColors[0].x, pointLightColors[0].y, pointLightColors[0].z), 1.0f,
+                                 0.09f, 0.032f);
+
+        // Point light #1
+        leafShader.setPointLight(0, pointLightPositions[0],
+                                 glm::vec3(pointLightColors[0].x * 0.1, pointLightColors[0].y * 0.1,
+                                           pointLightColors[0].z * 0.1),
+                                 glm::vec3(pointLightColors[0].x, pointLightColors[0].y, pointLightColors[0].z),
+                                 glm::vec3(pointLightColors[0].x, pointLightColors[0].y, pointLightColors[0].z),
+                                 1.0f, 0.09f, 0.032f);
 
         // Point light #2
-        leafShader.setVec3("u_PointLights[1].position", pointLightPositions[1]);
-        leafShader.setVec3("u_PointLights[1].ambient", glm::vec3(0.05f, 0.05f, 0.05f));
-        leafShader.setVec3("u_PointLights[1].diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
-        leafShader.setVec3("u_PointLights[1].specular", glm::vec3(1.0f, 1.0f, 1.0f));
-        leafShader.setFloat("u_PointLights[1].constant", 1.0f);
-        leafShader.setFloat("u_PointLights[1].linear", 0.09f);
-        leafShader.setFloat("u_PointLights[1].quadratic", 0.032f);
+        leafShader.setPointLight(1, pointLightPositions[0],
+                                 glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.8f, 0.8f, 0.8f),
+                                 glm::vec3(1.0f, 1.0f, 1.0f),
+                                 1.0f, 0.09f, 0.032f);
 
         // Point light #3
-        leafShader.setVec3("u_PointLights[2].position", pointLightPositions[2]);
-        leafShader.setVec3("u_PointLights[2].ambient", glm::vec3(0.05f, 0.05f, 0.05f));
-        leafShader.setVec3("u_PointLights[2].diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
-        leafShader.setVec3("u_PointLights[2].specular", glm::vec3(1.0f, 1.0f, 1.0f));
-        leafShader.setFloat("u_PointLights[2].constant", 1.0f);
-        leafShader.setFloat("u_PointLights[2].linear", 0.09f);
-        leafShader.setFloat("u_PointLights[2].quadratic", 0.032f);
+        leafShader.setPointLight(2, pointLightPositions[2],
+                                 pointLightColors[0], pointLightColors[1], pointLightColors[2],
+                                 1.0f, 0.09f, 0.032f);
 
         // Point light #4
-        leafShader.setVec3("u_PointLights[3].position", pointLightPositions[3]);
-        leafShader.setVec3("u_PointLights[3].ambient", glm::vec3(0.05f, 0.05f, 0.05f));
-        leafShader.setVec3("u_PointLights[3].diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
-        leafShader.setVec3("u_PointLights[3].specular", glm::vec3(1.0f, 1.0f, 1.0f));
-        leafShader.setFloat("u_PointLights[3].constant", 1.0f);
-        leafShader.setFloat("u_PointLights[3].linear", 0.09f);
-        leafShader.setFloat("u_PointLights[3].quadratic", 0.032f);
+        leafShader.setPointLight(3, pointLightPositions[3],
+                                 glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.8f, 0.8f, 0.8f),
+                                 glm::vec3(1.0f, 1.0f, 1.0f),
+                                 1.0f, 0.09f, 0.032f);
 
-        // u_SpotLight
-        leafShader.setVec3("u_SpotLight.position", camera.Position);
-        leafShader.setVec3("u_SpotLight.direction", camera.Front);
-        leafShader.setVec3("u_SpotLight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
-        leafShader.setVec3("u_SpotLight.diffuse", glm::vec3(1.0f, 1.0f, 1.0f));
-        leafShader.setVec3("u_SpotLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
-        leafShader.setFloat("u_SpotLight.constant", 1.0f);
-        leafShader.setFloat("u_SpotLight.linear", 0.09f);
-        leafShader.setFloat("u_SpotLight.quadratic", 0.032f);
-        leafShader.setFloat("u_SpotLight.cutOff", glm::cos(glm::radians(12.5f)));
-        leafShader.setFloat("u_SpotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
+        // Spotlight
+        leafShader.setSpotLight(camera.Position, camera.Front,
+                                glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.0f)),
+                                glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f),
+                                1.0f, 0.09f, 0.032f);
 
         leafShader.setFloat("u_Time", currentFrame);
+        int randomizer = 10 / rand() % 10;
+        leafShader.setFloat("u_Randomizer", randomizer);
 
         // view/projection transformations
         projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1F,
@@ -595,15 +572,14 @@ int main() {
         float target = leafTargetUp ? targetY : 0.0f;
         leafHeight += (target - leafHeight) * (1.0f - std::exp(-decayRate * deltaTime));
 
+
         float angleTargetUp = 500.0f;
         float angleTarget = leafTargetUp ? angleTargetUp : static_cast<float>(sin(glfwGetTime())) * 45.0f;
         leafSpingAngle += (angleTarget - leafSpingAngle) * (1.0f - std::exp(-decayRate * deltaTime));
 
-        const size_t leafCount = sizeof(leafPositions) / sizeof(leafPositions[0]);
-        // this is basically division the size of the array by the size of data type it stores in order to get the amount of elements. Could use a vector to get access to .size(), but all OpoenGL docs so far seem to use C-style arrays, so I'm sticking with this for now.
-
         const float vibrationRate = static_cast<float>(sin(glfwGetTime() * 100));
         bool isVibrationThreshold = leafHeight >= targetY - 0.8f;
+
         for (int i = 0; i < leafCount; ++i) {
             // set translation/scale/rotation
             glm::vec3 leafWorldPos = leafPositions[i] + yOffset * leafHeight;
@@ -613,7 +589,7 @@ int main() {
             }
             model = glm::mat4(1.0f);
             model = glm::translate(model, leafWorldPos);
-            model = glm::scale(model, glm::vec3(0.1f));
+            model = glm::scale(model, glm::vec3(leafScales[i]));
 
             model = glm::rotate(model, glm::radians(leafSpingAngle),
                                 glm::vec3(0.0f, 1.0f, 0.0f));
@@ -638,11 +614,12 @@ int main() {
         lightSourceShader.use();
         lightSourceShader.setMat4("u_Projection", projection);
         lightSourceShader.setMat4("u_View", view);
-        lightSourceShader.setVec3("u_Color", glm::vec3(pointLightColors[0].x * 0.1, pointLightColors[0].y * 0.1,
-                                                       pointLightColors[0].z * 0.1));
 
-        glBindVertexArray(VAOs[0]); // lamp objects (light sources)
-        for (unsigned int i = 0; i < 2; i++) {
+        glBindVertexArray(VAOs[0]);
+        const size_t pointLightCount = sizeof(pointLightPositions) / sizeof(pointLightPositions[0]);
+        for (size_t i = 0; i < pointLightCount; i++) {
+            lightSourceShader.setVec3("u_Color", pointLightColors[i]);
+
             model = glm::mat4(1.0f);
             model = glm::translate(model, pointLightPositions[i]);
             model = glm::scale(model, glm::vec3(0.2f));
