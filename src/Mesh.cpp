@@ -50,6 +50,50 @@ void Mesh::draw(Shader &shader) {
     glBindVertexArray(0);
 }
 
+void Mesh::drawInstanced(Shader &shader, unsigned int instanceCount) {
+    unsigned int diffuseNr = 1;
+    unsigned int specularNr = 1;
+
+    for (unsigned int i = 0; i < textures.size(); i++) {
+        glActiveTexture(GL_TEXTURE0 + i);
+        std::string number;
+        std::string name = textures[i].type;
+
+        if (name == "texture_diffuse")
+            number = std::to_string(diffuseNr++);
+        else if (name == "texture_specular")
+            number = std::to_string(specularNr++);
+
+        shader.setInt(("u_Material." + name + number), i);
+        glBindTexture(GL_TEXTURE_2D, textures[i].id);
+    }
+    glActiveTexture(GL_TEXTURE0);
+
+    glBindVertexArray(VAO);
+    glDrawElementsInstanced(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0, instanceCount);
+}
+
+void Mesh::setupInstancedBuffer(size_t maxInstances) {
+    glBindVertexArray(VAO);
+
+    glGenBuffers(1, &instancedVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, instancedVBO);
+    glBufferData(GL_ARRAY_BUFFER, maxInstances * sizeof(glm::mat4), nullptr, GL_DYNAMIC_DRAW);
+
+    std::size_t vec4Size = sizeof(glm::vec4);
+    for (unsigned int i = 0; i < 4; i++) {
+        glEnableVertexAttribArray(3 + i);
+        glVertexAttribPointer(3 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(i * vec4Size));
+        glVertexAttribDivisor(3 + i, 1);
+    }
+    glBindVertexArray(0);
+}
+
+void Mesh::updateInstancedBuffer(const std::vector<glm::mat4> &models) {
+    glBindBuffer(GL_ARRAY_BUFFER, instancedVBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, models.size() * sizeof(glm::mat4), models.data());
+}
+
 void Mesh::setupMesh() {
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);

@@ -21,6 +21,9 @@ public:
 
     Model(const char *path);
 
+    void setupInstancing(size_t maxInstances);
+    void drawInstanced(Shader &shader, const std::vector<glm::mat4> &instanceModels);
+
     void draw(Shader &shader);
 
 private:

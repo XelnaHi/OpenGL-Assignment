@@ -99,7 +99,7 @@ int main() {
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
-    // These two initializations heavily reduce code clutter in main file.
+    // These initializations heavily reduce code clutter in main file.
     Shader lightSourceShader("shaders/lightSource.vert", "shaders/lightSource.frag");
     Shader cubeShader("shaders/lightObject.vert", "shaders/lightObject.frag");
     Shader leafShader("shaders/leafSway.vert", "shaders/lightObject.frag");
@@ -150,19 +150,19 @@ int main() {
     };
 
     glm::vec3 cubePositions[] = {
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(2.0f, 5.0f, -15.0f),
-        glm::vec3(-1.5f, -2.2f, -2.5f),
-        glm::vec3(-3.8f, -2.0f, -12.3f),
-        glm::vec3(2.4f, -0.4f, -3.5f),
-        glm::vec3(-1.7f, 3.0f, -7.5f),
-        glm::vec3(1.3f, -2.0f, -2.5f),
-        glm::vec3(1.5f, 2.0f, -2.5f),
-        glm::vec3(1.5f, 0.2f, -1.5f),
-        glm::vec3(-1.3f, 1.0f, -1.5f)
+        glm::vec3(7.0f, 0.0f, -8.0f),
+        glm::vec3(9.0f, 5.0f, -17.0f),
+        glm::vec3(6.5f, -2.2f, -10.5f),
+        glm::vec3(4.8f, -2.0f, -14.3f),
+        glm::vec3(9.4f, -0.4f, -11.5f),
+        glm::vec3(6.7f, 3.0f, -15.5f),
+        glm::vec3(9.3f, -2.0f, -10.5f),
+        glm::vec3(9.5f, 2.0f, -10.5f),
+        glm::vec3(9.5f, 0.2f, -9.5f),
+        glm::vec3(9.3f, 1.0f, -9.5f)
     };
 
-    glm::vec3 leafPositions[] = {
+    std::vector<glm::vec3> leafPositions = {
         glm::vec3(-0.42f, -1.45f, 0.36f),
         glm::vec3(-1.03f, -1.06f, -0.32f),
         glm::vec3(-1.06f, -1.09f, -1.11f),
@@ -189,19 +189,6 @@ int main() {
         glm::vec3(0.39f, -1.54f, 0.48f),
         glm::vec3(0.35f, -0.61f, 0.77f),
     };
-
-
-    const size_t leafCount = sizeof(leafPositions) / sizeof(leafPositions[0]);
-    // this is basically division the size of the array by the size of data type it stores in order to get the amount of elements. Could use a vector to get access to .size(), but all OpoenGL docs so far seem to use C-style arrays, so I'm sticking with this for now.
-
-    srand(time(0));
-    // the leaf model scaled to 1.0 is **huge**! thus, the desired scaling right now is quite drastic (somewhere between 0.1 and 0.01)
-    float leafScales[leafCount];
-    for (size_t i = 0; i < leafCount; i++) {
-        int randomNr = rand() % 6;
-        float modelScale = 0.1 / randomNr;
-        leafScales[i] = modelScale;
-    }
 
 
     unsigned int texture1, texture2;
@@ -361,19 +348,6 @@ int main() {
      *  The result of the above matrix is equivalent to using: glm::lookAt(cameraPos, targetPos, worldUp)
      */
 
-    glm::vec3 lampPositions[] = {
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(2.0f, 5.0f, -15.0f),
-        glm::vec3(-1.5f, -2.2f, -2.5f),
-        glm::vec3(-3.8f, -2.0f, -12.3f),
-        glm::vec3(2.4f, -0.4f, -3.5f),
-        glm::vec3(-1.7f, 3.0f, -7.5f),
-        glm::vec3(1.3f, -2.0f, -2.5f),
-        glm::vec3(1.5f, 2.0f, -2.5f),
-        glm::vec3(1.5f, 0.2f, -1.5f),
-        glm::vec3(-1.3f, 1.0f, -1.5f)
-    };
-
     glm::vec3 pointLightPositions[] = {
         glm::vec3(0.7f, 0.2f, 2.0f),
         glm::vec3(2.3f, -3.3f, -4.0f),
@@ -382,18 +356,32 @@ int main() {
     };
 
     glm::vec3 pointLightColors[] = {
-        glm::vec3(0.0f, 1.0f, 0.2f),
         glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.2f),
         glm::vec3(1.0f, 1.0, 0.0),
-        glm::vec3(0.2f, 0.2f, 1.0f)
+        glm::vec3(0.2f, 0.2f, 1.0f),
     };
+
+
+    srand(time(0));
+    // the leaf model scaled to 1.0 is **huge**! thus, the desired scaling right now is quite drastic (somewhere between 0.1 and 0.01)
+    float leafScales[leafPositions.size()];
+    for (size_t i = 0; i < leafPositions.size(); i++) {
+        int randomNr = (rand() % 6) + 1;
+        float modelScale = 0.1 / randomNr;
+        leafScales[i] = modelScale;
+    }
+
+
+    // This basically encapsulates vertex setup (VAO, VBO, EBO), materials and texture unit application for model objects.
+    Model modelObj("res/textures/dry-leaf-rawscan/foglia.obj");
+    modelObj.setupInstancing(leafPositions.size());
 
     cubeShader.use();
     cubeShader.setInt("u_Material.texture_diffuse1", 0);
     cubeShader.setInt("u_Material.specular", 1);
 
-    // This basically encapsulates vertex setup (VAO, VBO, EBO), materials and texture unit application for model objects.
-    Model modelObj("res/textures/dry-leaf-rawscan/foglia.obj");
+
 
     // render loop
     while (!glfwWindowShouldClose(window)) {
@@ -454,10 +442,10 @@ int main() {
                                  1.0f, 0.09f, 0.032f);
 
         // Spotlight
-        // cubeShader.setSpotLight(camera.Position, camera.Front,
-        //    glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.0f)),
-        //    glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f),
-        //    1.0f, 0.09f, 0.032f);
+        cubeShader.setSpotLight(camera.Position, camera.Front,
+           glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.0f)),
+           glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f),
+           1.0f, 0.09f, 0.032f);
 
         cubeShader.setFloat("u_Time", currentFrame);
 
@@ -487,20 +475,20 @@ int main() {
         incAngle += 0.05f;
 
         // Renders the wooden boxes. Uses a more manual shader setup as opposed to the below leaf models, imported via Assimp.
-        // glBindVertexArray(VAOs[1]); // cube objects, scattered throughout view
-        // for (unsigned int i = 0; i < 10; i++) {
-        //     // calculate the model matrix for each object and pass it to shader before drawing
-        //     model = glm::mat4(1.0f);
-        //     model = glm::translate(model, cubePositions[i]);
-        //     if (i % 3 == 0) {
-        //         model = glm::rotate(model, glm::radians(incAngle), glm::vec3(1.0f, 0.3f, 0.5f));
-        //     } else {
-        //         model = glm::rotate(model, glm::radians(angle * i), glm::vec3(1.0f, 0.3f, 0.5f));
-        //     }
-        //     cubeShader.setMat4("u_Model", model);
-        //
-        //     glDrawArrays(GL_TRIANGLES, 0, 36);
-        // }
+        glBindVertexArray(VAOs[1]); // cube objects, scattered throughout view
+        for (unsigned int i = 0; i < 10; i++) {
+            // calculate the model matrix for each object and pass it to shader before drawing
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, cubePositions[i]);
+            if (i % 3 == 0) {
+                model = glm::rotate(model, glm::radians(incAngle), glm::vec3(1.0f, 0.3f, 0.5f));
+            } else {
+                model = glm::rotate(model, glm::radians(angle * i), glm::vec3(1.0f, 0.3f, 0.5f));
+            }
+            cubeShader.setMat4("u_Model", model);
+
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
 
 
         leafShader.use();
@@ -561,7 +549,6 @@ int main() {
         leafShader.setMat4("u_Projection", projection);
         leafShader.setMat4("u_View", view);
         model = glm::mat4(1.0f);
-        leafShader.setMat4("u_Model", model);
 
         glm::vec3 yOffset = glm::vec3(.0f, 1.0f, 0.0f);
 
@@ -580,36 +567,26 @@ int main() {
         const float vibrationRate = static_cast<float>(sin(glfwGetTime() * 100));
         bool isVibrationThreshold = leafHeight >= targetY - 0.8f;
 
-        for (int i = 0; i < leafCount; ++i) {
-            // set translation/scale/rotation
-            glm::vec3 leafWorldPos = leafPositions[i] + yOffset * leafHeight;
+        std::vector<glm::mat4> leafModels;
+        leafModels.reserve(leafPositions.size());
 
+        for (int i = 0; i < leafPositions.size(); i++) {
+            glm::vec3 leafWorldPos = leafPositions[i] + yOffset * leafHeight;
             if (isVibrationThreshold) {
                 leafWorldPos.x += vibrationRate * 0.002f;
             }
+
             model = glm::mat4(1.0f);
             model = glm::translate(model, leafWorldPos);
             model = glm::scale(model, glm::vec3(leafScales[i]));
 
             model = glm::rotate(model, glm::radians(leafSpingAngle),
                                 glm::vec3(0.0f, 1.0f, 0.0f));
-
-            leafShader.setMat4("u_Model", model);
-
-            // render the loaded model. Uses EBO's for index drawing internally
-            modelObj.draw(leafShader);
+            leafModels.push_back(model);
         }
 
-        auto time = static_cast<float>(glfwGetTime());
-        // could probably refactor this to use deltatime (incrementally) instead for consistency.
-        float sinAng = time * 100.0f + static_cast<float>(sin(time * 2)) * 20;
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(lightPos.x, lightPos.y - 1.f, lightPos.z + 2.f));
-        model = glm::rotate(model, glm::radians(sinAng), glm::vec3(lightPos.x, lightPos.y - 1.f, lightPos.z + 2.f));
-        leafShader.setMat4("u_Model", model);
+        modelObj.drawInstanced(leafShader, leafModels);
 
-        glBindVertexArray(VAOs[1]);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         lightSourceShader.use();
         lightSourceShader.setMat4("u_Projection", projection);

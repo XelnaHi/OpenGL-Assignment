@@ -7,8 +7,8 @@
 #include <string>
 
 #include "assimp/types.h"
-#include "glm/vec2.hpp"
-#include "glm/vec3.hpp"
+#include "glad/gl.h"
+#include "glm/glm.hpp"
 
 class Shader;
 struct Vertex;
@@ -23,8 +23,13 @@ public:
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
     void draw(Shader &shader);
 
+    void drawInstanced(Shader &shader, unsigned int instanceCount);
+    void setupInstancedBuffer(size_t maxInstances);
+    void updateInstancedBuffer(const std::vector<glm::mat4> &models);
+
 private:
     unsigned int VAO, VBO, EBO;
+    unsigned int instancedVBO = 0;
 
     void setupMesh();
 };
