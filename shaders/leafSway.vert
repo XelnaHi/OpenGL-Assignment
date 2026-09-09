@@ -9,7 +9,7 @@ uniform mat4 u_Model;
 uniform mat4 u_View;
 uniform mat4 u_Projection;
 uniform float u_Time;
-uniform float u_Randomizer;
+uniform bool u_ConditionalOptimizer;
 
 out vec3 FragPos;
 out vec3 Normal;
@@ -20,11 +20,19 @@ void main() {
 
     float sway = sin(u_Time * 2.0 + aPos.y * 3.0) * 0.05 * aPos.y;
     pos.x += sway;
-    pos.z += sway ;
+    pos.z += sway;
 
-    gl_Position = u_Projection * u_View * aInstanceModel * vec4(pos, 1.0f);
-    FragPos = vec3(aInstanceModel * vec4(pos, 1.0f));
-    Normal = mat3(transpose(inverse(aInstanceModel))) * aNormal;
+    if (u_ConditionalOptimizer){
+
+        gl_Position = u_Projection * u_View * aInstanceModel * vec4(pos, 1.0f);
+        FragPos = vec3(aInstanceModel * vec4(pos, 1.0f));
+        Normal = mat3(transpose(inverse(aInstanceModel))) * aNormal;
+    }
+    else {
+        gl_Position = u_Projection * u_View * u_Model * vec4(pos, 1.0f);
+        FragPos = vec3(u_Model * vec4(pos, 1.0f));
+        Normal = mat3(transpose(inverse(u_Model))) * aNormal;
+    }
     TexCoords = aTexCoords;
 }
 

@@ -48,6 +48,8 @@ float angle = 20.0f;
 // light settings
 glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
+// optimization keybind
+bool queryInstancedPerformance = true;
 
 // ---- LEAF -----
 // animation initiation
@@ -365,11 +367,11 @@ int main() {
 
     srand(time(0));
     // the leaf model scaled to 1.0 is **huge**! thus, the desired scaling right now is quite drastic (somewhere between 0.1 and 0.01)
-    float leafScales[leafPositions.size()];
+    std::vector<float> leafScales;
     for (size_t i = 0; i < leafPositions.size(); i++) {
         int randomNr = (rand() % 6) + 1;
         float modelScale = 0.1 / randomNr;
-        leafScales[i] = modelScale;
+        leafScales.push_back(modelScale);
     }
 
 
@@ -382,6 +384,8 @@ int main() {
     cubeShader.setInt("u_Material.specular", 1);
 
 
+    GLuint queryID[2];
+    glGenQueries(2, queryID);
 
     // render loop
     while (!glfwWindowShouldClose(window)) {
@@ -443,9 +447,9 @@ int main() {
 
         // Spotlight
         cubeShader.setSpotLight(camera.Position, camera.Front,
-           glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.0f)),
-           glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f),
-           1.0f, 0.09f, 0.032f);
+                                glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.0f)),
+                                glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f),
+                                1.0f, 0.09f, 0.032f);
 
         cubeShader.setFloat("u_Time", currentFrame);
 
@@ -539,8 +543,6 @@ int main() {
                                 1.0f, 0.09f, 0.032f);
 
         leafShader.setFloat("u_Time", currentFrame);
-        int randomizer = 10 / rand() % 10;
-        leafShader.setFloat("u_Randomizer", randomizer);
 
         // view/projection transformations
         projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1F,
@@ -567,25 +569,69 @@ int main() {
         const float vibrationRate = static_cast<float>(sin(glfwGetTime() * 100));
         bool isVibrationThreshold = leafHeight >= targetY - 0.8f;
 
-        std::vector<glm::mat4> leafModels;
-        leafModels.reserve(leafPositions.size());
 
-        for (int i = 0; i < leafPositions.size(); i++) {
-            glm::vec3 leafWorldPos = leafPositions[i] + yOffset * leafHeight;
-            if (isVibrationThreshold) {
-                leafWorldPos.x += vibrationRate * 0.002f;
+        if (queryInstancedPerformance) {
+            glBeginQuery(GL_TIME_ELAPSED, queryID[0]);
+
+            std::vector<glm::mat4> leafModels;
+            leafModels.reserve(leafPositions.size());
+
+            for (int i = 0; i < leafPositions.size(); i++) {
+                glm::vec3 leafWorldPos = leafPositions[i] + yOffset * leafHeight;
+                if (isVibrationThreshold) {
+                    leafWorldPos.x += vibrationRate * 0.002f;
+                }
+
+                model = glm::mat4(1.0f);
+                model = glm::translate(model, leafWorldPos);
+                model = glm::scale(model, glm::vec3(leafScales[i]));
+
+                model = glm::rotate(model, glm::radians(leafSpingAngle),
+                                    glm::vec3(0.0f, 1.0f, 0.0f));
+                leafModels.push_back(model);
             }
 
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, leafWorldPos);
-            model = glm::scale(model, glm::vec3(leafScales[i]));
+            leafShader.setBool("u_ConditionalOptimizer", true);
 
-            model = glm::rotate(model, glm::radians(leafSpingAngle),
-                                glm::vec3(0.0f, 1.0f, 0.0f));
-            leafModels.push_back(model);
+            modelObj.drawInstanced(leafShader, leafModels);
+
+            glEndQuery(GL_TIME_ELAPSED);
+
+            GLint success = 0;
+            glGetQueryObjectiv(queryID[0], GL_QUERY_RESULT_AVAILABLE, &success);
+            GLint64 elapsed_ns; // nanoseconds
+            glGetQueryObjecti64v(queryID[0], GL_QUERY_RESULT, &elapsed_ns);
+            // potentially queries the result of GL_QUERY_RESULT_AVAILABLE before it returned by the asynchronous function. If that's the case, CPU will be stalled. Haven't found a way to use the async query result yet.
+            printf("INSTANCED DRAW: GPU took: %.3f ms to draw.\n", elapsed_ns / 1000000.0);
+        } else {
+            glBeginQuery(GL_TIME_ELAPSED, queryID[1]);
+            // begin GPU frame query scope. Returns the time elapsed value as part of an async call.
+
+            for (int i = 0; i < leafPositions.size(); ++i) {
+                glm::vec3 leafWorldPos = leafPositions[i] + yOffset * leafHeight;
+                if (isVibrationThreshold) {
+                    leafWorldPos.x += vibrationRate * 0.002f;
+                }
+
+                model = glm::mat4(1.0f);
+                model = glm::translate(model, leafWorldPos);
+                model = glm::scale(model, glm::vec3(leafScales[i]));
+
+                model = glm::rotate(model, glm::radians(leafSpingAngle),
+                                    glm::vec3(0.0f, 1.0f, 0.0f));
+                leafShader.setBool("u_ConditionalOptimizer", false);
+                leafShader.setMat4("u_Model", model);
+                modelObj.draw(leafShader);
+            }
+            glEndQuery(GL_TIME_ELAPSED);
+
+            GLint success = 0;
+            glGetQueryObjectiv(queryID[1], GL_QUERY_RESULT_AVAILABLE, &success);
+            GLint64 elapsed_ns; // nanoseconds
+            glGetQueryObjecti64v(queryID[1], GL_QUERY_RESULT, &elapsed_ns);
+            // potentially queries the result of GL_QUERY_RESULT_AVAILABLE before it returned by the asynchronous function. If that's the case, CPU will be stalled. Haven't found a way to use the async query result yet.
+            printf("NON-INSTANCED DRAW: GPU took: %.3f ms to draw.\n", elapsed_ns / 1000000.0);
         }
-
-        modelObj.drawInstanced(leafShader, leafModels);
 
 
         lightSourceShader.use();
@@ -624,6 +670,7 @@ int main() {
 
 
 static bool fKeyWasDown = false;
+static bool tKeyWasDown = false;
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 void processInput(GLFWwindow *window) {
     // leaf hover
@@ -637,6 +684,12 @@ void processInput(GLFWwindow *window) {
     if (fKeyIsReleased && leafTargetUp) {
         leafTargetUp = !leafTargetUp;
     }
+
+    bool tKeyIsDown = glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS;
+    if (tKeyIsDown && !tKeyWasDown) {
+        queryInstancedPerformance = !queryInstancedPerformance;
+    }
+    tKeyWasDown = tKeyIsDown;
 
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);

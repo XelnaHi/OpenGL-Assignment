@@ -129,9 +129,7 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir){
     specular *= attenuation;
     emission *= attenuation;
 
-    //    return vec3(ambient + diffuse + specular + emission);
     return (ambient + diffuse + specular);
-
 }
 
 vec3 CalcSpotLight(SpotLight light, vec3 norm, vec3 fragPos, vec3 viewDir){
