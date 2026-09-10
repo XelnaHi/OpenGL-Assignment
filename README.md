@@ -74,4 +74,5 @@ Run it directly from the `bin` folder or via your IDE.
 | `Left Shift` (hold) | Speed boost — accelerates camera movement |
 | `F` (hold)| Toggle the leaf cluster's hover animation until the `F` key is released|
 | `F` (release)| Causes the leaf cluster to return to it's "resting" state|
+| `T` (press)| Toggles either draw calls using either instanced or non-instanced element arrays. Relevant debug log is printed to display the time it takes for each render process to finish.|
 | `Esc` | Close the application |

@@ -59,7 +59,7 @@ bool leafTargetUp = false; // determine whether the leaf should go up or down
 bool fKeyHeld = false; // used to limit key presses to a single press instead of per frame, which can be many
 
 // leaf rotation
-float leafSpingAngle = 10.0f;
+float leafSpingAngle = 0.0f;
 float leafSpingAngleUp = leafSpingAngle + 100.0f;
 float leafSpingAngleDown = leafSpingAngle + 100.0f * deltaTime;
 
@@ -563,7 +563,7 @@ int main() {
 
 
         float angleTargetUp = 500.0f;
-        float angleTarget = leafTargetUp ? angleTargetUp : static_cast<float>(sin(glfwGetTime())) * 45.0f;
+        float angleTarget = leafTargetUp ? angleTargetUp : 0.0f;
         leafSpingAngle += (angleTarget - leafSpingAngle) * (1.0f - std::exp(-decayRate * deltaTime));
 
         const float vibrationRate = static_cast<float>(sin(glfwGetTime() * 100));
